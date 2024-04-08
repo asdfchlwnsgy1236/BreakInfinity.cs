@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BreakInfinity.cs", "BreakInfinity.cs\BreakInfinity.cs.csproj", "{063934D6-A4A5-453F-96BA-8218642B0F32}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BreakInfinity.cs", "BreakInfinity.cs\BreakInfinity.cs.csproj", "{79E31FBD-A230-447A-A5EE-5C54CDEE815E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{063934D6-A4A5-453F-96BA-8218642B0F32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{063934D6-A4A5-453F-96BA-8218642B0F32}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{063934D6-A4A5-453F-96BA-8218642B0F32}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{063934D6-A4A5-453F-96BA-8218642B0F32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79E31FBD-A230-447A-A5EE-5C54CDEE815E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79E31FBD-A230-447A-A5EE-5C54CDEE815E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79E31FBD-A230-447A-A5EE-5C54CDEE815E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79E31FBD-A230-447A-A5EE-5C54CDEE815E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {944DB7AC-4E53-41D9-AED0-E398440C8F5C}
+		SolutionGuid = {C0E18F20-D6F2-42C8-94F0-CCC4D277B67C}
 	EndGlobalSection
 EndGlobal

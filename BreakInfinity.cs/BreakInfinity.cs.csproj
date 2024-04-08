@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>warnings</Nullable>
-    <OutputType>Exe</OutputType>
-  </PropertyGroup>
-
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<LangVersion>9.0</LangVersion>
+		<Nullable>warnings</Nullable>
+		<OutputType>Library</OutputType>
+	</PropertyGroup>
 </Project>
