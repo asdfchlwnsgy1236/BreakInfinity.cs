@@ -15,6 +15,7 @@ namespace BreakInfinity {
 		private const int DoubleMinExponent = -324;
 		private const int DoubleMaxExponent = 308;
 		private const int DoubleZeroExponentIndex = -DoubleMinExponent - 1;
+		private const int ThresholdExponentInt = 17;
 		private const double ThresholdExponent = 17;
 		private const double ThresholdDouble = 1e17;
 		private const int DefaultLength = 9;
@@ -25,13 +26,14 @@ namespace BreakInfinity {
 		private static readonly double[] PowersOf10 = new double[DoubleMaxExponent - DoubleMinExponent];
 		private static readonly string[] StandardNotationNames = { "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vig" };
 		private static readonly int StandardNotationThreshold;
+		private static readonly char[] ParseDelimiters = { 'E', 'e' };
 
 		public static readonly BigDouble Zero = new(0, 0, false);
 		public static readonly BigDouble One = new(1, 0, false);
 		public static readonly BigDouble Ten = new(1, 1, false);
 		public static readonly BigDouble NaN = new(double.NaN, 0, false);
-		public static readonly BigDouble PositiveInfinity = new(double.PositiveInfinity, 0, false);
 		public static readonly BigDouble NegativeInfinity = new(double.NegativeInfinity, 0, false);
+		public static readonly BigDouble PositiveInfinity = new(double.PositiveInfinity, 0, false);
 
 		public double Mantissa;
 		public double Exponent;
@@ -61,8 +63,32 @@ namespace BreakInfinity {
 			if(Math.Abs(n) >= ThresholdDouble) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, 0, 15));
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponentInt - 1));
 			return Math.Truncate(n * multi) / multi;
+		}
+
+		private static double Floor(double n, int digits) {
+			if(Math.Abs(n) >= ThresholdDouble) {
+				return n;
+			}
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponentInt - 1));
+			return Math.Floor(n * multi) / multi;
+		}
+
+		private static double Ceiling(double n, int digits) {
+			if(Math.Abs(n) >= ThresholdDouble) {
+				return n;
+			}
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponentInt - 1));
+			return Math.Ceiling(n * multi) / multi;
+		}
+
+		private static double Round(double n, int digits, MidpointRounding mode = MidpointRounding.ToEven) {
+			if(Math.Abs(n) >= ThresholdDouble) {
+				return n;
+			}
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponentInt - 1));
+			return Math.Round(n * multi, mode) / multi;
 		}
 
 		public static double GetPowerOf10(int power) => PowersOf10[power + DoubleZeroExponentIndex];
@@ -91,6 +117,39 @@ namespace BreakInfinity {
 
 		public static bool operator >=(BigDouble l, BigDouble r) => l.CompareTo(r) >= 0;
 
+		public static bool TryParse(string s, out BigDouble result) {
+			if(string.IsNullOrEmpty(s)) {
+				result = default;
+				return false;
+			}
+			string[] split = s.Split(ParseDelimiters, 1);
+			double[] me = { 0, 0 };
+			for(int a = 0; a < split.Length; ++a) {
+				if(!double.TryParse(split[a], out me[a])) {
+					result = default;
+					return false;
+				}
+			}
+			result = new(me[0], me[1]);
+			return true;
+		}
+
+		public static implicit operator BigDouble(double n) => new(n);
+
+		public static explicit operator double(BigDouble n) {
+			if(!n.IsFinite() || n.Mantissa == 0 || n.Exponent == 0) {
+				return n.Mantissa;
+			}
+			if(n.Exponent > DoubleMaxExponent) {
+				return n.Mantissa < 0 ? double.NegativeInfinity : double.PositiveInfinity;
+			}
+			if(n.Exponent < DoubleMinExponent) {
+				return 0;
+			}
+			int eo = (int)n.Exponent, eo1 = eo / 2, eo2 = eo1 + eo % 2;
+			return n.Mantissa * GetPowerOf10(eo1) * GetPowerOf10(eo2);
+		}
+
 		public static BigDouble operator +(BigDouble n) => n;
 
 		public static BigDouble operator -(BigDouble n) => n.Negated();
@@ -102,6 +161,22 @@ namespace BreakInfinity {
 		public static BigDouble operator --(BigDouble n) => n.Subtracted(One);
 
 		public static BigDouble operator -(BigDouble l, BigDouble r) => l.Subtracted(r);
+
+		public static BigDouble operator *(BigDouble l, BigDouble r) => l.Multiplied(r);
+
+		public static BigDouble operator /(BigDouble l, BigDouble r) => l.Divided(r);
+
+		public static BigDouble Reciprocal(BigDouble n) => n.Reciprocated();
+
+		public static BigDouble Abs(BigDouble n) => n.Abs();
+
+		public static BigDouble Truncate(BigDouble n) => n.Truncated();
+
+		public static BigDouble Floor(BigDouble n) => n.Floored();
+
+		public static BigDouble Ceiling(BigDouble n) => n.Ceiled();
+
+		public static BigDouble Round(BigDouble n, int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) => n.Rounded(digits, mode);
 
 		public readonly bool IsFinite() => double.IsFinite(Mantissa);
 
@@ -145,7 +220,7 @@ namespace BreakInfinity {
 		public readonly string ToString(string format, IFormatProvider formatProvider = null) {
 			int length = DefaultLength, decimals = DefaultDecimals, smallDec = DefaultSmallDec;
 			if(!string.IsNullOrEmpty(format)) {
-				var parts = format.Split(',');
+				string[] parts = format.Split(',');
 				if(parts.Length <= 3) {
 					int[] parsedValues = { DefaultLength, DefaultDecimals, DefaultSmallDec };
 					bool isValid = true;
@@ -197,8 +272,8 @@ namespace BreakInfinity {
 		}
 
 		public void Normalize() {
-			double mAbs = Math.Abs(Mantissa), er = Exponent % 1;
-			if(mAbs >= 1 && mAbs < 10 && er == 0) {
+			double mAbs = Math.Abs(Mantissa), ef = Exponent % 1;
+			if(mAbs >= 1 && mAbs < 10 && ef == 0) {
 				return;
 			}
 			if(Mantissa == 0) {
@@ -209,8 +284,8 @@ namespace BreakInfinity {
 				this = NaN;
 				return;
 			}
-			int eo = (int)Math.Floor(Math.Log10(mAbs) + er), eo1 = eo / 2, eo2 = eo1 + (eo % 2 == 0 ? 0 : 1);
-			Mantissa = Mantissa / GetPowerOf10(eo1) / GetPowerOf10(eo2) * Math.Pow(10, er);
+			int eo = (int)Math.Floor(Math.Log10(mAbs) + ef), eo1 = eo / 2, eo2 = eo1 + eo % 2;
+			Mantissa = Mantissa / GetPowerOf10(eo1) / GetPowerOf10(eo2) * Math.Pow(10, ef);
 			Exponent = Math.Truncate(Exponent) + eo;
 			bool ismi = double.IsInfinity(Mantissa);
 			if(double.IsInfinity(Exponent)) {
@@ -230,7 +305,7 @@ namespace BreakInfinity {
 
 		public void Add(BigDouble other) {
 			int diff = (int)Math.Round(Math.Abs(Exponent - other.Exponent));
-			if(diff >= ThresholdExponent) {
+			if(diff >= ThresholdExponentInt) {
 				return;
 			}
 			if(!IsFinite() || !other.IsFinite()) {
@@ -282,6 +357,111 @@ namespace BreakInfinity {
 		public readonly BigDouble Subtracted1OrUlp() {
 			BigDouble n = this;
 			n.Subtract1OrUlp();
+			return n;
+		}
+
+		public void Multiply(BigDouble other) {
+			Mantissa *= other.Mantissa;
+			Exponent += other.Exponent;
+			Normalize();
+		}
+
+		public readonly BigDouble Multiplied(BigDouble other) {
+			BigDouble n = this;
+			n.Multiply(other);
+			return n;
+		}
+
+		public void Divide(BigDouble other) {
+			Mantissa /= other.Mantissa;
+			Exponent -= other.Exponent;
+			Normalize();
+		}
+
+		public readonly BigDouble Divided(BigDouble other) {
+			BigDouble n = this;
+			n.Divide(other);
+			return n;
+		}
+
+		public void Reciprocate() {
+			Mantissa = 1 / Mantissa;
+			Exponent = -Exponent;
+			Normalize();
+		}
+
+		public readonly BigDouble Reciprocated() {
+			BigDouble n = this;
+			n.Reciprocate();
+			return n;
+		}
+
+		public readonly BigDouble Abs() => new(Math.Abs(Mantissa), Exponent, false);
+
+		public void Truncate(int digits = 0) {
+			if(Exponent >= ThresholdExponent || !IsFinite()) {
+				return;
+			}
+			if(Exponent < -digits) {
+				this = Zero;
+			}
+			Mantissa = Truncate(Mantissa, (int)Exponent + digits);
+		}
+
+		public readonly BigDouble Truncated(int digits = 0) {
+			BigDouble n = this;
+			n.Truncate(digits);
+			return n;
+		}
+
+		public void Floor(int digits = 0) {
+			if(Exponent >= ThresholdExponent || !IsFinite()) {
+				return;
+			}
+			if(Exponent < -digits) {
+				this = Mantissa < 0 ? -One : Zero;
+			}
+			Mantissa = Floor(Mantissa, (int)Exponent + digits);
+			Normalize();
+		}
+
+		public readonly BigDouble Floored(int digits = 0) {
+			BigDouble n = this;
+			n.Floor(digits);
+			return n;
+		}
+
+		public void Ceil(int digits = 0) {
+			if(Exponent >= ThresholdExponent || !IsFinite()) {
+				return;
+			}
+			if(Exponent < -digits) {
+				this = Mantissa < 0 ? Zero : One;
+			}
+			Mantissa = Ceiling(Mantissa, (int)Exponent + digits);
+			Normalize();
+		}
+
+		public readonly BigDouble Ceiled(int digits = 0) {
+			BigDouble n = this;
+			n.Ceil(digits);
+			return n;
+		}
+
+		public void Round(int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) {
+			if(Exponent >= ThresholdExponent || !IsFinite()) {
+				return;
+			}
+			if(Exponent < -digits - 1) {
+				this = Zero;
+			}
+			Mantissa = Round(Mantissa, (int)Exponent + digits, mode);
+			Normalize();
+		}
+
+		public readonly BigDouble Rounded(int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) {
+			BigDouble n = this;
+			n.Round(digits, mode);
 			return n;
 		}
 	}
