@@ -10,6 +10,36 @@ namespace BreakInfinity {
 		Engineering
 	}
 
+	// public static int Sign(double value);
+
+	// public static double Sqrt(double d);
+
+	// public static double Cbrt(double d);
+
+	// public static double Exp(double d);
+
+	// public static double Exp10(double d);
+
+	// public static double Pow(double x, double y);
+
+	// public static double Log(double d);
+
+	// public static double Log10(double d);
+
+	// public static double Log(double a, double newBase);
+
+	// public static double Sinh(double value);
+
+	// public static double Cosh(double value);
+
+	// public static double Tanh(double value);
+
+	// public static double Asinh(double d);
+
+	// public static double Acosh(double d);
+
+	// public static double Atanh(double d);
+
 	[Serializable]
 	public struct BigDouble: IComparable, IComparable<BigDouble>, IEquatable<BigDouble>, IFormattable {
 		private const int DoubleMinExponent = -324;
@@ -30,7 +60,12 @@ namespace BreakInfinity {
 
 		public static readonly BigDouble Zero = new(0, 0, false);
 		public static readonly BigDouble One = new(1, 0, false);
+		public static readonly BigDouble E = new(Math.E, 0, false);
+		public static readonly BigDouble Pi = new(Math.PI, 0, false);
 		public static readonly BigDouble Ten = new(1, 1, false);
+		public static readonly BigDouble MinValue = new(-BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(10) - 1), double.MaxValue, false);
+		public static readonly BigDouble MaxValue = new(BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(10) - 1), double.MaxValue, false);
+		public static readonly BigDouble Epsilon = new(1, double.MinValue, false);
 		public static readonly BigDouble NaN = new(double.NaN, 0, false);
 		public static readonly BigDouble NegativeInfinity = new(double.NegativeInfinity, 0, false);
 		public static readonly BigDouble PositiveInfinity = new(double.PositiveInfinity, 0, false);
@@ -178,6 +213,15 @@ namespace BreakInfinity {
 
 		public static BigDouble Round(BigDouble n, int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) => n.Rounded(digits, mode);
 
+		public static BigDouble Min(BigDouble l, BigDouble r) => l < r || l.IsNaN() ? l : r;
+
+		public static BigDouble Max(BigDouble l, BigDouble r) => l > r || l.IsNaN() ? l : r;
+
+		/// <summary>
+		///   Unlike Math.Clamp, this does not throw an exception when min is greater than max, so it is up to the developer to provide the right parameters.
+		/// </summary>
+		public static BigDouble Clamp(BigDouble n, BigDouble min, BigDouble max) => n < min ? min : n > max ? max : n;
+
 		public readonly bool IsFinite() => double.IsFinite(Mantissa);
 
 		public readonly bool IsNaN() => double.IsNaN(Mantissa);
@@ -217,6 +261,15 @@ namespace BreakInfinity {
 
 		public override readonly string ToString() => ToString(null, null);
 
+		/// <summary>
+		///   This is the implementation of the IFormattable interface, but it mostly ignores the typical format string characters. It is still possible to use
+		///   'G' followed by a number to specify the length (the 'e' in "1e100" is counted as well).
+		/// </summary>
+		/// <param name="format">
+		///   Up to three integers separated by commas that specify the length, decimals, and smallDec values (see the overload of <see cref="ToString"/> that
+		///   takes up to five parameters for what those values affect).
+		/// </param>
+		/// <param name="formatProvider">The format provider to apply to each number component.</param>
 		public readonly string ToString(string format, IFormatProvider formatProvider = null) {
 			int length = DefaultLength, decimals = DefaultDecimals, smallDec = DefaultSmallDec;
 			if(!string.IsNullOrEmpty(format)) {
@@ -235,21 +288,37 @@ namespace BreakInfinity {
 						decimals = parsedValues[1];
 						smallDec = parsedValues[2];
 					}
+					else if(int.TryParse(parts[0][1..], out parsedValues[0])) {
+						length = parsedValues[0];
+					}
 				}
 			}
 			return ToString(length, decimals, smallDec, DefaultNotation, formatProvider);
 		}
 
+		/// <summary>Makes a custom string representation that makes it easier to make a number stay within a certain length.</summary>
+		/// <param name="length">
+		///   The maximum length of the string representation in characters (includes minus signs and the 'e' in "1e100", excludes group separators and the
+		///   decimal point).
+		/// </param>
+		/// <param name="decimals">The maximum number of digits to show after the decimal point when the number requires abbreviation.</param>
+		/// <param name="smallDec">The maximum number of digits to show after the decimal point when the number is small enough to be shown as is.</param>
+		/// <param name="notation">
+		///   The type of notation to use when abbreviating the number (standard = letters, scientific = #e#, engineering = scientific but exponent fixed to
+		///   multiples of 3).
+		/// </param>
+		/// <param name="formatProvider">The format provider to apply to each number component.</param>
+		/// <remarks>
+		///   When the number is too large for standard notation, it falls back to scientific notation. When the number is too large for scientific or
+		///   engineering notation in the given length, it falls back to the format AeBeC = A * 10 ^ (B * 10 ^ C).
+		/// </remarks>
 		public readonly string ToString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider formatProvider = null) {
 			const string NumberFormat = "#,0.###############";
-			length = Math.Clamp(length, 3, 16);
+			length = Math.Clamp(length, 3, 16 - (Mantissa < 0 ? 1 : 0) - (Exponent < 0 ? 1 : 0));
 			decimals = Math.Clamp(decimals, 0, 15);
 			smallDec = Math.Clamp(smallDec, 0, 15);
 			if(!IsFinite()) {
 				return Mantissa.ToString(formatProvider);
-			}
-			if(Mantissa < 0 && length > 3) {
-				--length;
 			}
 			if(Exponent < length) {
 				return Truncate(Mantissa * GetPowerOf10((int)Exponent), Math.Min(Math.Min(smallDec, (int)(smallDec - Exponent)), length - 1)).ToString(NumberFormat, formatProvider);
@@ -271,6 +340,11 @@ namespace BreakInfinity {
 			return string.Concat(m.ToString(NumberFormat, formatProvider), "e", me.ToString(NumberFormat, formatProvider), "e", ee.ToString(NumberFormat, formatProvider));
 		}
 
+		/// <summary>
+		///   Brings the number back into normal form (the mantissa's magnitude is greater than or equal to 1 and less than 10, and the exponent is an integer
+		///   value).
+		/// </summary>
+		/// <remarks>In the case of the non-finite values (NaN and positive/negative infinity), this sets the number to the corresponding preset.</remarks>
 		public void Normalize() {
 			double mAbs = Math.Abs(Mantissa), ef = Exponent % 1;
 			if(mAbs >= 1 && mAbs < 10 && ef == 0) {
@@ -304,8 +378,12 @@ namespace BreakInfinity {
 		public readonly BigDouble Negated() => new(-Mantissa, Exponent, false);
 
 		public void Add(BigDouble other) {
-			int diff = (int)Math.Round(Math.Abs(Exponent - other.Exponent));
+			int diff = (int)Math.Round(Exponent - other.Exponent);
 			if(diff >= ThresholdExponentInt) {
+				return;
+			}
+			if(diff <= -ThresholdExponentInt) {
+				this = other;
 				return;
 			}
 			if(!IsFinite() || !other.IsFinite()) {
@@ -314,10 +392,11 @@ namespace BreakInfinity {
 				return;
 			}
 			if(Exponent < other.Exponent) {
-				Mantissa = Mantissa * GetPowerOf10(diff) + other.Mantissa;
+				Mantissa += other.Mantissa * GetPowerOf10(-diff);
 			}
 			else {
-				Mantissa += other.Mantissa * GetPowerOf10(diff);
+				Mantissa = Mantissa * GetPowerOf10(diff) + other.Mantissa;
+				Exponent -= diff;
 			}
 			Normalize();
 		}
@@ -329,9 +408,16 @@ namespace BreakInfinity {
 		}
 
 		public void Add1OrUlp() {
-			double m1 = Mantissa + 1;
-			Mantissa = Mantissa == m1 ? BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + 1) : m1;
-			Normalize();
+			BigDouble original = this;
+			Add(One);
+			if(this == original) {
+				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (Mantissa < 0 ? -1 : 1));
+				Normalize();
+				if(Mantissa < original.Mantissa && Exponent == original.Exponent) {
+					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) + 1);
+					Normalize();
+				}
+			}
 		}
 
 		public readonly BigDouble Added1OrUlp() {
@@ -349,9 +435,16 @@ namespace BreakInfinity {
 		}
 
 		public void Subtract1OrUlp() {
-			double m1 = Mantissa - 1;
-			Mantissa = Mantissa == m1 ? BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) - 1) : m1;
-			Normalize();
+			BigDouble original = this;
+			Subtract(One);
+			if(this == original) {
+				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (Mantissa < 0 ? 1 : -1));
+				Normalize();
+				if(Mantissa > original.Mantissa && Exponent == original.Exponent) {
+					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) - 1);
+					Normalize();
+				}
+			}
 		}
 
 		public readonly BigDouble Subtracted1OrUlp() {
