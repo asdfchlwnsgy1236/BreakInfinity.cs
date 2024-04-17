@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Joonhyo Choi (asdfchlwnsgy1236), licensed under the Apache License Version 2.0.
+// Copyright 2024 Joonhyo Choi (asdfchlwnsgy1236), licensed under the Apache License Version 2.0.
 
 namespace BreakInfinity {
 	using System;
@@ -10,43 +10,12 @@ namespace BreakInfinity {
 		Engineering
 	}
 
-	// public static int Sign(double value);
-
-	// public static double Sqrt(double d);
-
-	// public static double Cbrt(double d);
-
-	// public static double Exp(double d);
-
-	// public static double Exp10(double d);
-
-	// public static double Pow(double x, double y);
-
-	// public static double Log(double d);
-
-	// public static double Log10(double d);
-
-	// public static double Log(double a, double newBase);
-
-	// public static double Sinh(double value);
-
-	// public static double Cosh(double value);
-
-	// public static double Tanh(double value);
-
-	// public static double Asinh(double d);
-
-	// public static double Acosh(double d);
-
-	// public static double Atanh(double d);
-
 	[Serializable]
 	public struct BigDouble: IComparable, IComparable<BigDouble>, IEquatable<BigDouble>, IFormattable {
 		private const int DoubleMinExponent = -324;
 		private const int DoubleMaxExponent = 308;
 		private const int DoubleZeroExponentIndex = -DoubleMinExponent - 1;
-		private const int ThresholdExponentInt = 17;
-		private const double ThresholdExponent = 17;
+		private const int ThresholdExponent = 17;
 		private const double ThresholdDouble = 1e17;
 		private const int DefaultLength = 9;
 		private const int DefaultDecimals = 3;
@@ -57,6 +26,7 @@ namespace BreakInfinity {
 		private static readonly string[] StandardNotationNames = { "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vig" };
 		private static readonly int StandardNotationThreshold;
 		private static readonly char[] ParseDelimiters = { 'E', 'e' };
+		private static readonly BigDouble LogE10 = new(2.3025850929940456840, 0, false);
 
 		public static readonly BigDouble Zero = new(0, 0, false);
 		public static readonly BigDouble One = new(1, 0, false);
@@ -98,7 +68,7 @@ namespace BreakInfinity {
 			if(Math.Abs(n) >= ThresholdDouble) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponentInt - 1));
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent - 1));
 			return Math.Truncate(n * multi) / multi;
 		}
 
@@ -106,7 +76,7 @@ namespace BreakInfinity {
 			if(Math.Abs(n) >= ThresholdDouble) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponentInt - 1));
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent - 1));
 			return Math.Floor(n * multi) / multi;
 		}
 
@@ -114,7 +84,7 @@ namespace BreakInfinity {
 			if(Math.Abs(n) >= ThresholdDouble) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponentInt - 1));
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent - 1));
 			return Math.Ceiling(n * multi) / multi;
 		}
 
@@ -122,7 +92,7 @@ namespace BreakInfinity {
 			if(Math.Abs(n) >= ThresholdDouble) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponentInt - 1));
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent - 1));
 			return Math.Round(n * multi, mode) / multi;
 		}
 
@@ -139,6 +109,12 @@ namespace BreakInfinity {
 		public static bool IsPositiveInfinity(BigDouble n) => n.IsPositiveInfinity();
 
 		public static bool IsNegativeInfinity(BigDouble n) => n.IsNegativeInfinity();
+
+		public static bool IsNegative(BigDouble n) => n.IsNegative();
+
+		public static bool IsZero(BigDouble n) => n.IsZero();
+
+		public static int Sign(BigDouble n) => n.Sign();
 
 		public static bool operator ==(BigDouble l, BigDouble r) => l.Equals(r);
 
@@ -172,11 +148,11 @@ namespace BreakInfinity {
 		public static implicit operator BigDouble(double n) => new(n);
 
 		public static explicit operator double(BigDouble n) {
-			if(!n.IsFinite() || n.Mantissa == 0 || n.Exponent == 0) {
+			if(!n.IsFinite() || n.IsZero() || n.Exponent == 0) {
 				return n.Mantissa;
 			}
 			if(n.Exponent > DoubleMaxExponent) {
-				return n.Mantissa < 0 ? double.NegativeInfinity : double.PositiveInfinity;
+				return n.IsNegative() ? double.NegativeInfinity : double.PositiveInfinity;
 			}
 			if(n.Exponent < DoubleMinExponent) {
 				return 0;
@@ -205,6 +181,40 @@ namespace BreakInfinity {
 
 		public static BigDouble Abs(BigDouble n) => n.Abs();
 
+		public static BigDouble Sqrt(BigDouble n) => n.Sqrted();
+
+		public static BigDouble Cbrt(BigDouble n) => n.Cbrted();
+
+		public static BigDouble Square(BigDouble n) => n.Squared();
+
+		public static BigDouble Cube(BigDouble n) => n.Cubed();
+
+		public static double Log10(BigDouble n) => n.Log10();
+
+		public static BigDouble Ln(BigDouble n) => n.Ln();
+
+		public static BigDouble Log(BigDouble n, double b) => n.Log(b);
+
+		public static double Log(BigDouble n, BigDouble b) => n.Log(b);
+
+		public static BigDouble Exp10(double n) => n % 1 == 0 ? new(1, n, false) : new(1, n);
+
+		public static BigDouble Pow(BigDouble b, double p) => b.Pow(p);
+
+		public static BigDouble Exp(double p) => Math.Abs(p) <= 708 ? (BigDouble)Math.Exp(p) : E.Pow(p);
+
+		// public static double Sinh(double value);
+
+		// public static double Cosh(double value);
+
+		// public static double Tanh(double value);
+
+		// public static double Asinh(double d);
+
+		// public static double Acosh(double d);
+
+		// public static double Atanh(double d);
+
 		public static BigDouble Truncate(BigDouble n) => n.Truncated();
 
 		public static BigDouble Floor(BigDouble n) => n.Floored();
@@ -218,7 +228,8 @@ namespace BreakInfinity {
 		public static BigDouble Max(BigDouble l, BigDouble r) => l > r || l.IsNaN() ? l : r;
 
 		/// <summary>
-		///   Unlike Math.Clamp, this does not throw an exception when min is greater than max, so it is up to the developer to provide the right parameters.
+		///   Unlike <see cref="Math.Clamp"/>, this does not throw an exception when min is greater than max, so it is up to the developer to provide the right
+		///   parameters for the correct behavior.
 		/// </summary>
 		public static BigDouble Clamp(BigDouble n, BigDouble min, BigDouble max) => n < min ? min : n > max ? max : n;
 
@@ -232,6 +243,12 @@ namespace BreakInfinity {
 
 		public readonly bool IsNegativeInfinity() => double.IsNegativeInfinity(Mantissa);
 
+		public readonly bool IsNegative() => double.IsNegative(Mantissa);
+
+		public readonly bool IsZero() => Mantissa == 0;
+
+		public readonly int Sign() => Math.Sign(Mantissa);
+
 		public readonly int CompareTo(object other) {
 			if(other == null) {
 				return 1;
@@ -243,12 +260,9 @@ namespace BreakInfinity {
 		}
 
 		public readonly int CompareTo(BigDouble other) {
-			int mcmp = Mantissa.CompareTo(other.Mantissa);
-			if(!IsFinite() || !other.IsFinite() || Mantissa == 0 || other.Mantissa == 0 || Mantissa < 0 && other.Mantissa > 0 || Mantissa > 0 && other.Mantissa < 0) {
-				return mcmp;
-			}
 			int ecmp = Exponent.CompareTo(other.Exponent);
-			return ecmp == 0 ? mcmp : Mantissa < 0 ? -ecmp : ecmp;
+			bool isNegative = IsNegative();
+			return !IsFinite() || !other.IsFinite() || IsZero() || other.IsZero() || ecmp == 0 || isNegative != other.IsNegative() ? Mantissa.CompareTo(other.Mantissa) : isNegative ? -ecmp : ecmp;
 		}
 
 		public override readonly bool Equals(object other) => other is BigDouble n && Equals(n);
@@ -262,8 +276,8 @@ namespace BreakInfinity {
 		public override readonly string ToString() => ToString(null, null);
 
 		/// <summary>
-		///   This is the implementation of the IFormattable interface, but it mostly ignores the typical format string characters. It is still possible to use
-		///   'G' followed by a number to specify the length (the 'e' in "1e100" is counted as well).
+		///   This is the implementation of the <see cref="IFormattable"/> interface, but it mostly ignores the typical format string characters. It is still
+		///   possible to use 'G' followed by a number to specify the length (the 'e' in "1e100" is counted as well).
 		/// </summary>
 		/// <param name="format">
 		///   Up to three integers separated by commas that specify the length, decimals, and smallDec values (see the overload of <see cref="ToString"/> that
@@ -314,7 +328,7 @@ namespace BreakInfinity {
 		/// </remarks>
 		public readonly string ToString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider formatProvider = null) {
 			const string NumberFormat = "#,0.###############";
-			length = Math.Clamp(length, 3, 16 - (Mantissa < 0 ? 1 : 0) - (Exponent < 0 ? 1 : 0));
+			length = Math.Clamp(length, 3, 16 - (double.IsNegative(Mantissa) ? 1 : 0) - (double.IsNegative(Exponent) ? 1 : 0));
 			decimals = Math.Clamp(decimals, 0, 15);
 			smallDec = Math.Clamp(smallDec, 0, 15);
 			if(!IsFinite()) {
@@ -340,34 +354,33 @@ namespace BreakInfinity {
 			return string.Concat(m.ToString(NumberFormat, formatProvider), "e", me.ToString(NumberFormat, formatProvider), "e", ee.ToString(NumberFormat, formatProvider));
 		}
 
-		/// <summary>
-		///   Brings the number back into normal form (the mantissa's magnitude is greater than or equal to 1 and less than 10, and the exponent is an integer
-		///   value).
-		/// </summary>
+		/// <summary>Brings the number back into normal form (1 &lt;= mantissa's absolute value &lt; 10, and the exponent is an integer).</summary>
 		/// <remarks>In the case of the non-finite values (NaN and positive/negative infinity), this sets the number to the corresponding preset.</remarks>
 		public void Normalize() {
 			double mAbs = Math.Abs(Mantissa), ef = Exponent % 1;
 			if(mAbs >= 1 && mAbs < 10 && ef == 0) {
 				return;
 			}
-			if(Mantissa == 0) {
-				this = Zero;
+			if(IsZero()) {
+				this = double.IsPositiveInfinity(Exponent) ? NaN : Zero;
 				return;
 			}
 			if(double.IsNaN(Mantissa) || double.IsNaN(Exponent)) {
 				this = NaN;
 				return;
 			}
-			int eo = (int)Math.Floor(Math.Log10(mAbs) + ef), eo1 = eo / 2, eo2 = eo1 + eo % 2;
-			Mantissa = Mantissa / GetPowerOf10(eo1) / GetPowerOf10(eo2) * Math.Pow(10, ef);
-			Exponent = Math.Truncate(Exponent) + eo;
+			if(double.IsFinite(Mantissa) && double.IsFinite(Exponent)) {
+				int eo = (int)Math.Floor(Math.Log10(mAbs) + ef), eo1 = eo / 2, eo2 = eo1 + eo % 2;
+				Mantissa = Mantissa / GetPowerOf10(eo1) / GetPowerOf10(eo2) * Math.Pow(10, ef);
+				Exponent = Math.Truncate(Exponent) + eo;
+			}
 			bool ismi = double.IsInfinity(Mantissa);
 			if(double.IsInfinity(Exponent)) {
-				this = Exponent < 0 ? ismi ? NaN : Zero : Mantissa < 0 ? NegativeInfinity : PositiveInfinity;
+				this = double.IsNegative(Exponent) ? ismi ? NaN : Zero : double.IsNegative(Mantissa) ? NegativeInfinity : PositiveInfinity;
 				return;
 			}
 			if(ismi) {
-				this = Mantissa < 0 ? NegativeInfinity : PositiveInfinity;
+				Exponent = 0;
 			}
 		}
 
@@ -379,10 +392,10 @@ namespace BreakInfinity {
 
 		public void Add(BigDouble other) {
 			int diff = (int)Math.Round(Exponent - other.Exponent);
-			if(diff >= ThresholdExponentInt) {
+			if(diff >= ThresholdExponent) {
 				return;
 			}
-			if(diff <= -ThresholdExponentInt) {
+			if(diff <= -ThresholdExponent) {
 				this = other;
 				return;
 			}
@@ -411,7 +424,7 @@ namespace BreakInfinity {
 			BigDouble original = this;
 			Add(One);
 			if(this == original) {
-				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (Mantissa < 0 ? -1 : 1));
+				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? -1 : 1));
 				Normalize();
 				if(Mantissa < original.Mantissa && Exponent == original.Exponent) {
 					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) + 1);
@@ -438,7 +451,7 @@ namespace BreakInfinity {
 			BigDouble original = this;
 			Subtract(One);
 			if(this == original) {
-				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (Mantissa < 0 ? 1 : -1));
+				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? 1 : -1));
 				Normalize();
 				if(Mantissa > original.Mantissa && Exponent == original.Exponent) {
 					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) - 1);
@@ -491,6 +504,82 @@ namespace BreakInfinity {
 
 		public readonly BigDouble Abs() => new(Math.Abs(Mantissa), Exponent, false);
 
+		public void Sqrt() {
+			Mantissa = Math.Sqrt(Mantissa);
+			Exponent /= 2;
+			Normalize();
+		}
+
+		public readonly BigDouble Sqrted() {
+			BigDouble n = this;
+			n.Sqrt();
+			return n;
+		}
+
+		public void Cbrt() {
+			Mantissa = Math.Cbrt(Mantissa);
+			Exponent /= 3;
+			Normalize();
+		}
+
+		public readonly BigDouble Cbrted() {
+			BigDouble n = this;
+			n.Cbrt();
+			return n;
+		}
+
+		public void Square() {
+			Mantissa *= Mantissa;
+			Exponent *= 2;
+			Normalize();
+		}
+
+		public readonly BigDouble Squared() {
+			BigDouble n = this;
+			n.Square();
+			return n;
+		}
+
+		public void Cube() {
+			Mantissa *= Mantissa * Mantissa;
+			Exponent *= 3;
+			Normalize();
+		}
+
+		public readonly BigDouble Cubed() {
+			BigDouble n = this;
+			n.Cube();
+			return n;
+		}
+
+		public readonly double Log10() => Math.Log10(Mantissa) + Exponent;
+
+		public readonly BigDouble Ln() => Math.Log(Mantissa) + new BigDouble(Exponent) * LogE10;
+
+		public readonly BigDouble Log(double b) => Math.Log(Mantissa, b) + new BigDouble(Exponent) * Math.Log(10, b);
+
+		public readonly double Log(BigDouble b) => Log10() / Log10(b);
+
+		public readonly BigDouble Pow(double power) {
+			double mpow = Math.Pow(Mantissa, power);
+			if(IsZero() || !IsFinite() || !double.IsFinite(power) || mpow != 0 && !double.IsInfinity(mpow)) {
+				return new(mpow, Exponent * power);
+			}
+			bool isNegative = IsNegative();
+			double pmod2 = power % 2;
+			if(isNegative && !(pmod2 is 0 or 1)) {
+				return NaN;
+			}
+			BigDouble n = double.IsNegative(power) ? Reciprocated() : this;
+			double p = Math.Abs(power);
+			// TODO: Find if there is a more efficient way to do this while maintaining approximately the right mantissa (the typical trick of using
+			// logarithmic identities gives a mantissa of 1 for too large a range of exponents).
+			for(; p >= 2; p /= 2) {
+				n.Square();
+			}
+			return pmod2 == 0 ? n : -n;
+		}
+
 		public void Truncate(int digits = 0) {
 			if(Exponent >= ThresholdExponent || !IsFinite()) {
 				return;
@@ -512,7 +601,7 @@ namespace BreakInfinity {
 				return;
 			}
 			if(Exponent < -digits) {
-				this = Mantissa < 0 ? -One : Zero;
+				this = IsNegative() ? -One : Zero;
 			}
 			Mantissa = Floor(Mantissa, (int)Exponent + digits);
 			Normalize();
@@ -529,7 +618,7 @@ namespace BreakInfinity {
 				return;
 			}
 			if(Exponent < -digits) {
-				this = Mantissa < 0 ? Zero : One;
+				this = IsNegative() ? Zero : One;
 			}
 			Mantissa = Ceiling(Mantissa, (int)Exponent + digits);
 			Normalize();

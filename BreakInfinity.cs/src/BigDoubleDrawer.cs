@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Joonhyo Choi (asdfchlwnsgy1236), licensed under the Apache License Version 2.0.
+// Copyright 2024 Joonhyo Choi (asdfchlwnsgy1236), licensed under the Apache License Version 2.0.
 
 #if UNITY_EDITOR
 
