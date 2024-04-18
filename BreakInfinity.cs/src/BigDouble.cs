@@ -572,10 +572,15 @@ namespace BreakInfinity {
 			}
 			BigDouble n = double.IsNegative(power) ? Reciprocated() : this;
 			double p = Math.Abs(power);
-			// TODO: Find if there is a more efficient way to do this while maintaining approximately the right mantissa (the typical trick of using
-			// logarithmic identities gives a mantissa of 1 for too large a range of exponents).
+			// TODO: Find if there is a more efficient way to do this while maintaining approximately the right mantissa (the typical trick of using logarithmic
+			// identities gives a mantissa of 1 for too large a range of exponents).
 			for(; p >= 2; p /= 2) {
 				n.Square();
+			}
+			if(p != 1) {
+				n.Mantissa = Math.Pow(n.Mantissa, p);
+				n.Exponent *= p;
+				n.Normalize();
 			}
 			return pmod2 == 0 ? n : -n;
 		}
