@@ -554,10 +554,14 @@ namespace BreakInfinity {
 
 		public readonly double Log10() => Math.Log10(Mantissa) + Exponent;
 
-		public readonly BigDouble Ln() => Math.Log(Mantissa) + new BigDouble(Exponent) * LogE10;
+		public readonly BigDouble Ln() => Math.Log(Mantissa) + (BigDouble)Exponent * LogE10;
 
-		public readonly BigDouble Log(double b) => Math.Log(Mantissa, b) + new BigDouble(Exponent) * Math.Log(10, b);
+		public readonly BigDouble Log(double b) => Math.Log(Mantissa, b) + (BigDouble)Exponent * Math.Log(10, b);
 
+		/// <summary>
+		///   This is meant for use with bases that are either greater than <see cref="double.MaxValue"/> or less than <see cref="double.Epsilon"/> in
+		///   magnitude, and returns a <see cref="double"/> with that assumption.
+		/// </summary>
 		public readonly double Log(BigDouble b) => Log10() / Log10(b);
 
 		public readonly BigDouble Pow(double power) {
@@ -573,7 +577,9 @@ namespace BreakInfinity {
 			BigDouble n = double.IsNegative(power) ? Reciprocated() : this;
 			double p = Math.Abs(power);
 			// TODO: Find if there is a more efficient way to do this while maintaining approximately the right mantissa (the typical trick of using logarithmic
-			// identities gives a mantissa of 1 for too large a range of exponents).
+			// identities gives a mantissa of 1 for too large a range of exponents). Consider if it matters to have the right mantissa when the number is so
+			// large that multiplying by a million is buried due to lack of precision (in this case, it may be better to fix the mantissa to 1 when the exponent
+			// is beyond a threshold in magnitude during normalization).
 			for(; p >= 2; p /= 2) {
 				n.Square();
 			}
