@@ -15,8 +15,9 @@ namespace BreakInfinity {
 		private const int DoubleMinExponent = -324;
 		private const int DoubleMaxExponent = 308;
 		private const int DoubleZeroExponentIndex = -DoubleMinExponent - 1;
-		private const int ThresholdExponent = 17;
-		private const double ThresholdDouble = 1e17;
+		private const int ThresholdExponent1 = 15;
+		private const int ThresholdExponent10 = 17;
+		private const double ThresholdDouble = 18014398509481984;
 		private const int DefaultLength = 9;
 		private const int DefaultDecimals = 3;
 		private const int DefaultSmallDec = 0;
@@ -33,8 +34,8 @@ namespace BreakInfinity {
 		public static readonly BigDouble E = new(Math.E, 0, false);
 		public static readonly BigDouble Pi = new(Math.PI, 0, false);
 		public static readonly BigDouble Ten = new(1, 1, false);
-		public static readonly BigDouble MinValue = new(-BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(10) - 1), double.MaxValue, false);
-		public static readonly BigDouble MaxValue = new(BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(10) - 1), double.MaxValue, false);
+		public static readonly BigDouble MinValue = new(-1, double.MaxValue, false);
+		public static readonly BigDouble MaxValue = new(1, double.MaxValue, false);
 		public static readonly BigDouble Epsilon = new(1, double.MinValue, false);
 		public static readonly BigDouble NaN = new(double.NaN, 0, false);
 		public static readonly BigDouble NegativeInfinity = new(double.NegativeInfinity, 0, false);
@@ -68,7 +69,7 @@ namespace BreakInfinity {
 			if(Math.Abs(n) >= ThresholdDouble) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent - 1));
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent1));
 			return Math.Truncate(n * multi) / multi;
 		}
 
@@ -76,7 +77,7 @@ namespace BreakInfinity {
 			if(Math.Abs(n) >= ThresholdDouble) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent - 1));
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent1));
 			return Math.Floor(n * multi) / multi;
 		}
 
@@ -84,7 +85,7 @@ namespace BreakInfinity {
 			if(Math.Abs(n) >= ThresholdDouble) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent - 1));
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent1));
 			return Math.Ceiling(n * multi) / multi;
 		}
 
@@ -92,7 +93,7 @@ namespace BreakInfinity {
 			if(Math.Abs(n) >= ThresholdDouble) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent - 1));
+			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent1));
 			return Math.Round(n * multi, mode) / multi;
 		}
 
@@ -354,11 +355,19 @@ namespace BreakInfinity {
 			return string.Concat(m.ToString(NumberFormat, formatProvider), "e", me.ToString(NumberFormat, formatProvider), "e", ee.ToString(NumberFormat, formatProvider));
 		}
 
-		/// <summary>Brings the number back into normal form (1 &lt;= mantissa's absolute value &lt; 10, and the exponent is an integer).</summary>
+		/// <summary>
+		///   <para>Brings this number back into normal form which is one of the following:</para>
+		///   <list type="bullet">
+		///     <item>|exponent| &lt; threshold and 1 &lt;= |mantissa| &lt; 10 and the exponent has no fractional part</item>
+		///     <item>|exponent| &gt;= threshold and mantissa == 1</item>
+		///   </list>
+		///   <para>where |n| is the absolute value of n, and threshold is <see cref="ThresholdDouble"/>.</para>
+		/// </summary>
 		/// <remarks>In the case of the non-finite values (NaN and positive/negative infinity), this sets the number to the corresponding preset.</remarks>
 		public void Normalize() {
-			double mAbs = Math.Abs(Mantissa), ef = Exponent % 1;
-			if(mAbs >= 1 && mAbs < 10 && ef == 0) {
+			double mAbs = Math.Abs(Mantissa), eAbs = Math.Abs(Exponent), ef = Exponent % 1;
+			bool isNormalLow = mAbs >= 1 && mAbs < 10 && ef == 0;
+			if(eAbs < ThresholdDouble && isNormalLow || eAbs >= ThresholdDouble && mAbs == 1) {
 				return;
 			}
 			if(IsZero()) {
@@ -369,11 +378,6 @@ namespace BreakInfinity {
 				this = NaN;
 				return;
 			}
-			if(double.IsFinite(Mantissa) && double.IsFinite(Exponent)) {
-				int eo = (int)Math.Floor(Math.Log10(mAbs) + ef), eo1 = eo / 2, eo2 = eo1 + eo % 2;
-				Mantissa = Mantissa / GetPowerOf10(eo1) / GetPowerOf10(eo2) * Math.Pow(10, ef);
-				Exponent = Math.Truncate(Exponent) + eo;
-			}
 			bool ismi = double.IsInfinity(Mantissa);
 			if(double.IsInfinity(Exponent)) {
 				this = double.IsNegative(Exponent) ? ismi ? NaN : Zero : double.IsNegative(Mantissa) ? NegativeInfinity : PositiveInfinity;
@@ -381,6 +385,15 @@ namespace BreakInfinity {
 			}
 			if(ismi) {
 				Exponent = 0;
+				return;
+			}
+			if(!isNormalLow) {
+				int eo = (int)Math.Floor(Math.Log10(mAbs) + ef), eo1 = eo / 2, eo2 = eo1 + eo % 2;
+				Mantissa = Mantissa / GetPowerOf10(eo1) / GetPowerOf10(eo2) * Math.Pow(10, ef);
+				Exponent = Math.Truncate(Exponent) + eo;
+			}
+			if(Math.Abs(Exponent) >= ThresholdDouble) {
+				Mantissa = 1;
 			}
 		}
 
@@ -391,11 +404,11 @@ namespace BreakInfinity {
 		public readonly BigDouble Negated() => new(-Mantissa, Exponent, false);
 
 		public void Add(BigDouble other) {
-			int diff = (int)Math.Round(Exponent - other.Exponent);
-			if(diff >= ThresholdExponent) {
+			double diff = Math.Round(Exponent - other.Exponent);
+			if(diff > ThresholdExponent10) {
 				return;
 			}
-			if(diff <= -ThresholdExponent) {
+			if(diff < -ThresholdExponent10) {
 				this = other;
 				return;
 			}
@@ -405,10 +418,10 @@ namespace BreakInfinity {
 				return;
 			}
 			if(Exponent < other.Exponent) {
-				Mantissa += other.Mantissa * GetPowerOf10(-diff);
+				Mantissa += other.Mantissa * GetPowerOf10(-(int)diff);
 			}
 			else {
-				Mantissa = Mantissa * GetPowerOf10(diff) + other.Mantissa;
+				Mantissa = Mantissa * GetPowerOf10((int)diff) + other.Mantissa;
 				Exponent -= diff;
 			}
 			Normalize();
@@ -574,25 +587,12 @@ namespace BreakInfinity {
 			if(isNegative && !(pmod2 is 0 or 1)) {
 				return NaN;
 			}
-			BigDouble n = double.IsNegative(power) ? Reciprocated() : this;
-			double p = Math.Abs(power);
-			// TODO: Find if there is a more efficient way to do this while maintaining approximately the right mantissa (the typical trick of using logarithmic
-			// identities gives a mantissa of 1 for too large a range of exponents). Consider if it matters to have the right mantissa when the number is so
-			// large that multiplying by a million is buried due to lack of precision (in this case, it may be better to fix the mantissa to 1 when the exponent
-			// is beyond a threshold in magnitude during normalization).
-			for(; p >= 2; p /= 2) {
-				n.Square();
-			}
-			if(p != 1) {
-				n.Mantissa = Math.Pow(n.Mantissa, p);
-				n.Exponent *= p;
-				n.Normalize();
-			}
-			return pmod2 == 0 ? n : -n;
+			BigDouble n = Exp10(Log10(Abs()) * power);
+			return isNegative && pmod2 == 0 ? n : -n;
 		}
 
 		public void Truncate(int digits = 0) {
-			if(Exponent >= ThresholdExponent || !IsFinite()) {
+			if(Exponent > ThresholdExponent1 || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
@@ -608,7 +608,7 @@ namespace BreakInfinity {
 		}
 
 		public void Floor(int digits = 0) {
-			if(Exponent >= ThresholdExponent || !IsFinite()) {
+			if(Exponent > ThresholdExponent1 || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
@@ -625,7 +625,7 @@ namespace BreakInfinity {
 		}
 
 		public void Ceil(int digits = 0) {
-			if(Exponent >= ThresholdExponent || !IsFinite()) {
+			if(Exponent > ThresholdExponent1 || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
@@ -642,7 +642,7 @@ namespace BreakInfinity {
 		}
 
 		public void Round(int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) {
-			if(Exponent >= ThresholdExponent || !IsFinite()) {
+			if(Exponent > ThresholdExponent1 || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits - 1) {
