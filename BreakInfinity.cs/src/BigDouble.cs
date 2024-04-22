@@ -10,6 +10,17 @@ namespace BreakInfinity {
 		Engineering
 	}
 
+	/// <summary>
+	///   <para>
+	///     This is a replacement for <see cref="double"/> for use with numbers as large as 1e1e308 == 10^(10^308) and as small as 1e-1e308 == 10^-(10^308) ==
+	///     1/(10^(10^308)), and prioritizes performance over accuracy.
+	///   </para>
+	///   <para>
+	///     The most noticeable consequence of prioritizing performance is that numbers above a certain threshold no longer have a proper mantissa due to the
+	///     limited precision, but this should be irrelevant for this type's intended use case (incremental games).
+	///   </para>
+	///   <para>Note that the instance functions suffixed with "Mod" modify the instance they are called on instead of making a copy.</para>
+	/// </summary>
 	[Serializable]
 	public struct BigDouble: IComparable, IComparable<BigDouble>, IEquatable<BigDouble>, IFormattable {
 		private const int DoubleMinExponent = -324;
@@ -55,14 +66,14 @@ namespace BreakInfinity {
 			Mantissa = mantissa;
 			Exponent = exponent;
 			if(needsNormalization) {
-				Normalize();
+				NormalizeMod();
 			}
 		}
 
 		public BigDouble(double n) {
 			Mantissa = n;
 			Exponent = 0;
-			Normalize();
+			NormalizeMod();
 		}
 
 		private static double Truncate(double n, int digits) {
@@ -164,31 +175,31 @@ namespace BreakInfinity {
 
 		public static BigDouble operator +(BigDouble n) => n;
 
-		public static BigDouble operator -(BigDouble n) => n.Negated();
+		public static BigDouble operator -(BigDouble n) => n.Negate();
 
-		public static BigDouble operator ++(BigDouble n) => n.Added(One);
+		public static BigDouble operator ++(BigDouble n) => n.Add(One);
 
-		public static BigDouble operator +(BigDouble l, BigDouble r) => l.Added(r);
+		public static BigDouble operator +(BigDouble l, BigDouble r) => l.Add(r);
 
-		public static BigDouble operator --(BigDouble n) => n.Subtracted(One);
+		public static BigDouble operator --(BigDouble n) => n.Subtract(One);
 
-		public static BigDouble operator -(BigDouble l, BigDouble r) => l.Subtracted(r);
+		public static BigDouble operator -(BigDouble l, BigDouble r) => l.Subtract(r);
 
-		public static BigDouble operator *(BigDouble l, BigDouble r) => l.Multiplied(r);
+		public static BigDouble operator *(BigDouble l, BigDouble r) => l.Multiply(r);
 
-		public static BigDouble operator /(BigDouble l, BigDouble r) => l.Divided(r);
+		public static BigDouble operator /(BigDouble l, BigDouble r) => l.Divide(r);
 
-		public static BigDouble Reciprocal(BigDouble n) => n.Reciprocated();
+		public static BigDouble Reciprocal(BigDouble n) => n.Reciprocate();
 
 		public static BigDouble Abs(BigDouble n) => n.Abs();
 
-		public static BigDouble Sqrt(BigDouble n) => n.Sqrted();
+		public static BigDouble Sqrt(BigDouble n) => n.Sqrt();
 
-		public static BigDouble Cbrt(BigDouble n) => n.Cbrted();
+		public static BigDouble Cbrt(BigDouble n) => n.Cbrt();
 
-		public static BigDouble Square(BigDouble n) => n.Squared();
+		public static BigDouble Square(BigDouble n) => n.Square();
 
-		public static BigDouble Cube(BigDouble n) => n.Cubed();
+		public static BigDouble Cube(BigDouble n) => n.Cube();
 
 		public static double Log10(BigDouble n) => n.Log10();
 
@@ -216,13 +227,13 @@ namespace BreakInfinity {
 
 		// public static double Atanh(double d);
 
-		public static BigDouble Truncate(BigDouble n) => n.Truncated();
+		public static BigDouble Truncate(BigDouble n, int digits = 0) => n.Truncate(digits);
 
-		public static BigDouble Floor(BigDouble n) => n.Floored();
+		public static BigDouble Floor(BigDouble n, int digits = 0) => n.Floor(digits);
 
-		public static BigDouble Ceiling(BigDouble n) => n.Ceiled();
+		public static BigDouble Ceiling(BigDouble n, int digits = 0) => n.Ceiling(digits);
 
-		public static BigDouble Round(BigDouble n, int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) => n.Rounded(digits, mode);
+		public static BigDouble Round(BigDouble n, int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) => n.Round(digits, mode);
 
 		public static BigDouble Min(BigDouble l, BigDouble r) => l < r || l.IsNaN() ? l : r;
 
@@ -335,6 +346,7 @@ namespace BreakInfinity {
 			if(!IsFinite()) {
 				return Mantissa.ToString(formatProvider);
 			}
+			// TODO: Properly handle very small numbers (exponent is a large negative value). The way it is now will throw an exception.
 			if(Exponent < length) {
 				return Truncate(Mantissa * GetPowerOf10((int)Exponent), Math.Min(Math.Min(smallDec, (int)(smallDec - Exponent)), length - 1)).ToString(NumberFormat, formatProvider);
 			}
@@ -352,6 +364,7 @@ namespace BreakInfinity {
 						return string.Concat(m.ToString(NumberFormat, formatProvider), "e", e.ToString(NumberFormat, formatProvider));
 				}
 			}
+			// TODO: When the number is beyond the threshold where the mantissa becomes irrelevant, stop showing the mantissa (for example, e1.234e100).
 			return string.Concat(m.ToString(NumberFormat, formatProvider), "e", me.ToString(NumberFormat, formatProvider), "e", ee.ToString(NumberFormat, formatProvider));
 		}
 
@@ -364,7 +377,7 @@ namespace BreakInfinity {
 		///   <para>where |n| is the absolute value of n, and threshold is <see cref="ThresholdDouble"/>.</para>
 		/// </summary>
 		/// <remarks>In the case of the non-finite values (NaN and positive/negative infinity), this sets the number to the corresponding preset.</remarks>
-		public void Normalize() {
+		public void NormalizeMod() {
 			double mAbs = Math.Abs(Mantissa), eAbs = Math.Abs(Exponent), ef = Exponent % 1;
 			bool isNormalLow = mAbs >= 1 && mAbs < 10 && ef == 0;
 			if(eAbs < ThresholdDouble && isNormalLow || eAbs >= ThresholdDouble && mAbs == 1) {
@@ -397,13 +410,13 @@ namespace BreakInfinity {
 			}
 		}
 
-		public readonly BigDouble Normalized() => new(Mantissa, Exponent);
+		public readonly BigDouble Normalize() => new(Mantissa, Exponent);
 
-		public void Negate() => Mantissa = -Mantissa;
+		public void NegateMod() => Mantissa = -Mantissa;
 
-		public readonly BigDouble Negated() => new(-Mantissa, Exponent, false);
+		public readonly BigDouble Negate() => new(-Mantissa, Exponent, false);
 
-		public void Add(BigDouble other) {
+		public void AddMod(BigDouble other) {
 			double diff = Math.Round(Exponent - other.Exponent);
 			if(diff > ThresholdExponent10) {
 				return;
@@ -424,147 +437,154 @@ namespace BreakInfinity {
 				Mantissa = Mantissa * GetPowerOf10((int)diff) + other.Mantissa;
 				Exponent -= diff;
 			}
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Added(BigDouble other) {
+		public readonly BigDouble Add(BigDouble other) {
 			BigDouble n = this;
-			n.Add(other);
+			n.AddMod(other);
 			return n;
 		}
 
-		public void Add1OrUlp() {
+		public void Add1OrUlpMod() {
 			BigDouble original = this;
-			Add(One);
+			AddMod(One);
 			if(this == original) {
 				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? -1 : 1));
-				Normalize();
+				NormalizeMod();
 				if(Mantissa < original.Mantissa && Exponent == original.Exponent) {
 					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) + 1);
-					Normalize();
+					NormalizeMod();
 				}
 			}
 		}
 
-		public readonly BigDouble Added1OrUlp() {
+		public readonly BigDouble Add1OrUlp() {
 			BigDouble n = this;
-			n.Add1OrUlp();
+			n.Add1OrUlpMod();
 			return n;
 		}
 
-		public void Subtract(BigDouble other) => Add(-other);
+		public void SubtractMod(BigDouble other) => AddMod(-other);
 
-		public readonly BigDouble Subtracted(BigDouble other) {
+		public readonly BigDouble Subtract(BigDouble other) {
 			BigDouble n = this;
-			n.Subtract(other);
+			n.SubtractMod(other);
 			return n;
 		}
 
-		public void Subtract1OrUlp() {
+		public void Subtract1OrUlpMod() {
 			BigDouble original = this;
-			Subtract(One);
+			SubtractMod(One);
 			if(this == original) {
 				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? 1 : -1));
-				Normalize();
+				NormalizeMod();
 				if(Mantissa > original.Mantissa && Exponent == original.Exponent) {
 					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) - 1);
-					Normalize();
+					NormalizeMod();
 				}
 			}
 		}
 
-		public readonly BigDouble Subtracted1OrUlp() {
+		public readonly BigDouble Subtract1OrUlp() {
 			BigDouble n = this;
-			n.Subtract1OrUlp();
+			n.Subtract1OrUlpMod();
 			return n;
 		}
 
-		public void Multiply(BigDouble other) {
+		public void MultiplyMod(BigDouble other) {
 			Mantissa *= other.Mantissa;
 			Exponent += other.Exponent;
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Multiplied(BigDouble other) {
+		public readonly BigDouble Multiply(BigDouble other) {
 			BigDouble n = this;
-			n.Multiply(other);
+			n.MultiplyMod(other);
 			return n;
 		}
 
-		public void Divide(BigDouble other) {
+		public void DivideMod(BigDouble other) {
 			Mantissa /= other.Mantissa;
 			Exponent -= other.Exponent;
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Divided(BigDouble other) {
+		public readonly BigDouble Divide(BigDouble other) {
 			BigDouble n = this;
-			n.Divide(other);
+			n.DivideMod(other);
 			return n;
 		}
 
-		public void Reciprocate() {
+		public void ReciprocateMod() {
 			Mantissa = 1 / Mantissa;
 			Exponent = -Exponent;
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Reciprocated() {
+		public readonly BigDouble Reciprocate() {
 			BigDouble n = this;
-			n.Reciprocate();
+			n.ReciprocateMod();
 			return n;
 		}
 
-		public readonly BigDouble Abs() => new(Math.Abs(Mantissa), Exponent, false);
+		public void AbsMod() => Mantissa = Math.Abs(Mantissa);
 
-		public void Sqrt() {
+		public readonly BigDouble Abs() {
+			BigDouble n = this;
+			n.AbsMod();
+			return n;
+		}
+
+		public void SqrtMod() {
 			Mantissa = Math.Sqrt(Mantissa);
 			Exponent /= 2;
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Sqrted() {
+		public readonly BigDouble Sqrt() {
 			BigDouble n = this;
-			n.Sqrt();
+			n.SqrtMod();
 			return n;
 		}
 
-		public void Cbrt() {
+		public void CbrtMod() {
 			Mantissa = Math.Cbrt(Mantissa);
 			Exponent /= 3;
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Cbrted() {
+		public readonly BigDouble Cbrt() {
 			BigDouble n = this;
-			n.Cbrt();
+			n.CbrtMod();
 			return n;
 		}
 
-		public void Square() {
+		public void SquareMod() {
 			Mantissa *= Mantissa;
 			Exponent *= 2;
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Squared() {
+		public readonly BigDouble Square() {
 			BigDouble n = this;
-			n.Square();
+			n.SquareMod();
 			return n;
 		}
 
-		public void Cube() {
+		public void CubeMod() {
 			Mantissa *= Mantissa * Mantissa;
 			Exponent *= 3;
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Cubed() {
+		public readonly BigDouble Cube() {
 			BigDouble n = this;
-			n.Cube();
+			n.CubeMod();
 			return n;
 		}
 
+		/// <summary>Returns the log base 10 of this number as a <see cref="double"/> since all possible return values can be represented with it.</summary>
 		public readonly double Log10() => Math.Log10(Mantissa) + Exponent;
 
 		public readonly BigDouble Ln() => Math.Log(Mantissa) + (BigDouble)Exponent * LogE10;
@@ -591,70 +611,74 @@ namespace BreakInfinity {
 			return isNegative && pmod2 == 0 ? n : -n;
 		}
 
-		public void Truncate(int digits = 0) {
+		public void TruncateMod(int digits = 0) {
 			if(Exponent > ThresholdExponent1 || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
 				this = Zero;
+				return;
 			}
 			Mantissa = Truncate(Mantissa, (int)Exponent + digits);
 		}
 
-		public readonly BigDouble Truncated(int digits = 0) {
+		public readonly BigDouble Truncate(int digits = 0) {
 			BigDouble n = this;
-			n.Truncate(digits);
+			n.TruncateMod(digits);
 			return n;
 		}
 
-		public void Floor(int digits = 0) {
+		public void FloorMod(int digits = 0) {
 			if(Exponent > ThresholdExponent1 || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
 				this = IsNegative() ? -One : Zero;
+				return;
 			}
 			Mantissa = Floor(Mantissa, (int)Exponent + digits);
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Floored(int digits = 0) {
+		public readonly BigDouble Floor(int digits = 0) {
 			BigDouble n = this;
-			n.Floor(digits);
+			n.FloorMod(digits);
 			return n;
 		}
 
-		public void Ceil(int digits = 0) {
+		public void CeilingMod(int digits = 0) {
 			if(Exponent > ThresholdExponent1 || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
 				this = IsNegative() ? Zero : One;
+				return;
 			}
 			Mantissa = Ceiling(Mantissa, (int)Exponent + digits);
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Ceiled(int digits = 0) {
+		public readonly BigDouble Ceiling(int digits = 0) {
 			BigDouble n = this;
-			n.Ceil(digits);
+			n.CeilingMod(digits);
 			return n;
 		}
 
-		public void Round(int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) {
+		public void RoundMod(int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) {
 			if(Exponent > ThresholdExponent1 || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits - 1) {
 				this = Zero;
+				return;
 			}
 			Mantissa = Round(Mantissa, (int)Exponent + digits, mode);
-			Normalize();
+			NormalizeMod();
 		}
 
-		public readonly BigDouble Rounded(int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) {
+		public readonly BigDouble Round(int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) {
 			BigDouble n = this;
-			n.Round(digits, mode);
+			n.RoundMod(digits, mode);
 			return n;
 		}
 	}
