@@ -38,10 +38,12 @@ namespace BreakInfinity {
 		private static readonly string[] StandardNotationNames = { "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vig" };
 		private static readonly int StandardNotationThreshold;
 		private static readonly char[] ParseDelimiters = { 'E', 'e' };
-		private static readonly BigDouble LogE10 = new(2.3025850929940456840, 0, false);
+		private static readonly BigDouble Ln10 = new(2.3025850929940456840, 0, false);
 
 		public static readonly BigDouble Zero = new(0, 0, false);
+		public static readonly BigDouble Half = new(5, -1, false);
 		public static readonly BigDouble One = new(1, 0, false);
+		public static readonly BigDouble Two = new(2, 0, false);
 		public static readonly BigDouble E = new(Math.E, 0, false);
 		public static readonly BigDouble Pi = new(Math.PI, 0, false);
 		public static readonly BigDouble Ten = new(1, 1, false);
@@ -215,17 +217,20 @@ namespace BreakInfinity {
 
 		public static BigDouble Exp(double p) => Math.Abs(p) <= 708 ? (BigDouble)Math.Exp(p) : E.Pow(p);
 
-		// public static double Sinh(double value);
+		public static BigDouble Sinh(double n) => (Exp(n) - Exp(-n)) * Half;
 
-		// public static double Cosh(double value);
+		public static BigDouble Cosh(double n) => (Exp(n) + Exp(-n)) * Half;
 
-		// public static double Tanh(double value);
+		public static BigDouble Tanh(double n) {
+			BigDouble epx = Exp(n), enx = Exp(-n);
+			return (epx - enx) / (epx + enx);
+		}
 
-		// public static double Asinh(double d);
+		public static BigDouble Asinh(BigDouble n) => Ln(n + Sqrt(Square(n) + One));
 
-		// public static double Acosh(double d);
+		public static BigDouble Acosh(BigDouble n) => Ln(n + Sqrt(Square(n) - One));
 
-		// public static double Atanh(double d);
+		public static BigDouble Atanh(BigDouble n) => Ln((One + n) / (One - n)) * Half;
 
 		public static BigDouble Truncate(BigDouble n, int digits = 0) => n.Truncate(digits);
 
@@ -587,7 +592,7 @@ namespace BreakInfinity {
 		/// <summary>Returns the log base 10 of this number as a <see cref="double"/> since all possible return values can be represented with it.</summary>
 		public readonly double Log10() => Math.Log10(Mantissa) + Exponent;
 
-		public readonly BigDouble Ln() => Math.Log(Mantissa) + (BigDouble)Exponent * LogE10;
+		public readonly BigDouble Ln() => Math.Log(Mantissa) + (BigDouble)Exponent * Ln10;
 
 		public readonly BigDouble Log(double b) => Math.Log(Mantissa, b) + (BigDouble)Exponent * Math.Log(10, b);
 
