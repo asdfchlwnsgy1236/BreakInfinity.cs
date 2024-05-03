@@ -26,9 +26,9 @@ namespace BreakInfinity {
 		private const int DoubleMinExponent = -324;
 		private const int DoubleMaxExponent = 308;
 		private const int DoubleZeroExponentIndex = -DoubleMinExponent - 1;
-		private const int ThresholdExponent1 = 15;
-		private const int ThresholdExponent10 = 17;
-		private const double ThresholdDouble = 18014398509481984;
+		private const int ThresholdMod1Exponent = 15;
+		private const int ThresholdAdd10Exponent = 17;
+		private const double ThresholdMod1Double = 4503599627370496;
 		private const int DefaultLength = 9;
 		private const int DefaultDecimals = 3;
 		private const int DefaultSmallDec = 0;
@@ -36,7 +36,7 @@ namespace BreakInfinity {
 
 		private static readonly double[] PowersOf10 = new double[DoubleMaxExponent - DoubleMinExponent];
 		private static readonly string[] StandardNotationNames = { "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vig" };
-		private static readonly int StandardNotationThreshold;
+		private static readonly double StandardNotationThreshold;
 		private static readonly char[] ParseDelimiters = { 'E', 'e' };
 		private static readonly BigDouble Ln10 = new(2.3025850929940456840, 0, false);
 
@@ -79,34 +79,34 @@ namespace BreakInfinity {
 		}
 
 		private static double Truncate(double n, int digits) {
-			if(Math.Abs(n) >= ThresholdDouble) {
+			if(Math.Abs(n) >= ThresholdMod1Double) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent1));
+			double multi = GetPowerOf10(digits);
 			return Math.Truncate(n * multi) / multi;
 		}
 
 		private static double Floor(double n, int digits) {
-			if(Math.Abs(n) >= ThresholdDouble) {
+			if(Math.Abs(n) >= ThresholdMod1Double) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent1));
+			double multi = GetPowerOf10(digits);
 			return Math.Floor(n * multi) / multi;
 		}
 
 		private static double Ceiling(double n, int digits) {
-			if(Math.Abs(n) >= ThresholdDouble) {
+			if(Math.Abs(n) >= ThresholdMod1Double) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent1));
+			double multi = GetPowerOf10(digits);
 			return Math.Ceiling(n * multi) / multi;
 		}
 
-		private static double Round(double n, int digits, MidpointRounding mode = MidpointRounding.ToEven) {
-			if(Math.Abs(n) >= ThresholdDouble) {
+		private static double Round(double n, int digits, MidpointRounding mode = default) {
+			if(Math.Abs(n) >= ThresholdMod1Double) {
 				return n;
 			}
-			double multi = GetPowerOf10(Math.Clamp(digits, DoubleMinExponent + 1, ThresholdExponent1));
+			double multi = GetPowerOf10(digits);
 			return Math.Round(n * multi, mode) / multi;
 		}
 
@@ -238,7 +238,7 @@ namespace BreakInfinity {
 
 		public static BigDouble Ceiling(BigDouble n, int digits = 0) => n.Ceiling(digits);
 
-		public static BigDouble Round(BigDouble n, int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) => n.Round(digits, mode);
+		public static BigDouble Round(BigDouble n, int digits = 0, MidpointRounding mode = default) => n.Round(digits, mode);
 
 		public static BigDouble Min(BigDouble l, BigDouble r) => l < r || l.IsNaN() ? l : r;
 
@@ -327,65 +327,87 @@ namespace BreakInfinity {
 			return ToString(length, decimals, smallDec, DefaultNotation, formatProvider);
 		}
 
-		/// <summary>Makes a custom string representation that makes it easier to make a number stay within a certain length.</summary>
+		/// <summary>Makes a custom string representation that makes it easier to make this number stay within a certain length.</summary>
 		/// <param name="length">
 		///   The maximum length of the string representation in characters (includes minus signs and the 'e' in "1e100", excludes group separators and the
 		///   decimal point).
 		/// </param>
-		/// <param name="decimals">The maximum number of digits to show after the decimal point when the number requires abbreviation.</param>
-		/// <param name="smallDec">The maximum number of digits to show after the decimal point when the number is small enough to be shown as is.</param>
+		/// <param name="decimals">The maximum number of digits to show after the decimal point when this number requires abbreviation.</param>
+		/// <param name="smallDec">The maximum number of digits to show after the decimal point when this number is small enough to be shown as is.</param>
 		/// <param name="notation">
-		///   The type of notation to use when abbreviating the number (standard = letters, scientific = #e#, engineering = scientific but exponent fixed to
-		///   multiples of 3).
+		///   The type of notation to use when abbreviating this number (standard = letters like k and m, scientific = AeB = A * 10 ^ B, engineering =
+		///   scientific but exponent fixed to multiples of 3).
 		/// </param>
 		/// <param name="formatProvider">The format provider to apply to each number component.</param>
 		/// <remarks>
-		///   When the number is too large for standard notation, it falls back to scientific notation. When the number is too large for scientific or
-		///   engineering notation in the given length, it falls back to the format AeBeC = A * 10 ^ (B * 10 ^ C).
+		///   When this number is too large for standard notation, it falls back to scientific notation. When this number is too large for scientific or
+		///   engineering notation in the given length, it falls back to the format AeBeC = A * 10 ^ (B * 10 ^ C). When the magnitude of the exponent of this
+		///   number is greater than <see cref="ThresholdMod1Double"/>, it stops displaying the mantissa (A in the previous format description) since it is
+		///   always 1.
 		/// </remarks>
 		public readonly string ToString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider formatProvider = null) {
 			const string NumberFormat = "#,0.###############";
-			length = Math.Clamp(length, 3, 16 - (double.IsNegative(Mantissa) ? 1 : 0) - (double.IsNegative(Exponent) ? 1 : 0));
+			double eAbs = Math.Abs(Exponent);
+			bool ismsig = eAbs < ThresholdMod1Double, ismn = double.IsNegative(Mantissa), isen = double.IsNegative(Exponent);
+			if(ismsig) {
+				--length;
+			}
+			if(ismn) {
+				--length;
+			}
+			if(isen) {
+				--length;
+			}
+			length = Math.Clamp(length, 2, 15);
 			decimals = Math.Clamp(decimals, 0, 15);
 			smallDec = Math.Clamp(smallDec, 0, 15);
 			if(!IsFinite()) {
 				return Mantissa.ToString(formatProvider);
 			}
-			// TODO: Properly handle very small numbers (exponent is a large negative value). The way it is now will throw an exception.
-			if(Exponent < length) {
-				return Truncate(Mantissa * GetPowerOf10((int)Exponent), Math.Min(Math.Min(smallDec, (int)(smallDec - Exponent)), length - 1)).ToString(NumberFormat, formatProvider);
+			if(eAbs <= length) {
+				int ei = (int)Exponent;
+				return Truncate(Mantissa * GetPowerOf10(ei), Math.Clamp(smallDec - ei, 0, Math.Min(length - ei, length))).ToString(NumberFormat, formatProvider);
 			}
-			double e = Exponent, m = Truncate(Mantissa, Math.Min(decimals, length - (int)Math.Log10(Exponent) - 3));
-			int ee = (int)Math.Log10(e);
-			double me = Truncate(e / GetPowerOf10(ee), Math.Min(decimals, length - (int)Math.Log10(ee) - 5));
-			double offset = Exponent % 3, e3 = Exponent - offset, m3 = Math.Truncate(Mantissa * 100) / GetPowerOf10((int)(2 - offset));
-			if(ee < length - 2 || ee < 3) {
+			int ee = (int)Math.Log10(eAbs);
+			double m = Truncate(Mantissa, Math.Max(Math.Min(decimals, length - 2 - ee), 0));
+			double me = Truncate(Exponent / GetPowerOf10(ee), Math.Max(Math.Min(decimals, length - 4 - (int)Math.Log10(ee)), 0));
+			if(isen) {
+				me = -me;
+			}
+			double offset = Exponent % 3;
+			if(offset < 0) {
+				offset += 3;
+			}
+			double e3 = Exponent - offset, m3 = Math.Truncate(Mantissa * 100) / GetPowerOf10((int)(2 - offset));
+			if(ee < length - 1 || ee < 3) {
 				switch(notation) {
-					case Notation.Standard when e3 < StandardNotationThreshold:
+					case Notation.Standard when e3 >= 0 && e3 < StandardNotationThreshold:
 						return string.Concat(m3.ToString(NumberFormat, formatProvider), GetStandardName((int)e3));
 					case Notation.Engineering:
 						return string.Concat(m3.ToString(NumberFormat, formatProvider), "e", e3.ToString(NumberFormat, formatProvider));
 					default:
-						return string.Concat(m.ToString(NumberFormat, formatProvider), "e", e.ToString(NumberFormat, formatProvider));
+						return string.Concat(m.ToString(NumberFormat, formatProvider), "e", Exponent.ToString(NumberFormat, formatProvider));
 				}
 			}
-			// TODO: When the number is beyond the threshold where the mantissa becomes irrelevant, stop showing the mantissa (for example, e1.234e100).
-			return string.Concat(m.ToString(NumberFormat, formatProvider), "e", me.ToString(NumberFormat, formatProvider), "e", ee.ToString(NumberFormat, formatProvider));
+			if(ismsig) {
+				return string.Concat(m.ToString(NumberFormat, formatProvider), "e", me.ToString(NumberFormat, formatProvider), "e", ee.ToString(NumberFormat, formatProvider));
+			}
+			return string.Concat(ismn ? "-e" : "e", me.ToString(NumberFormat, formatProvider), "e", ee.ToString(NumberFormat, formatProvider));
 		}
 
 		/// <summary>
 		///   <para>Brings this number back into normal form which is one of the following:</para>
 		///   <list type="bullet">
 		///     <item>|exponent| &lt; threshold and 1 &lt;= |mantissa| &lt; 10 and the exponent has no fractional part</item>
-		///     <item>|exponent| &gt;= threshold and mantissa == 1</item>
+		///     <item>|exponent| &gt;= threshold and |mantissa| == 1</item>
 		///   </list>
-		///   <para>where |n| is the absolute value of n, and threshold is <see cref="ThresholdDouble"/>.</para>
+		///   <para>where |n| is the absolute value of n, and threshold is <see cref="ThresholdMod1Double"/>.</para>
 		/// </summary>
-		/// <remarks>In the case of the non-finite values (NaN and positive/negative infinity), this sets the number to the corresponding preset.</remarks>
+		/// <remarks>In the case of any non-finite values (NaN and positive/negative infinity), this sets the number to the corresponding preset.</remarks>
 		public void NormalizeMod() {
 			double mAbs = Math.Abs(Mantissa), eAbs = Math.Abs(Exponent), ef = Exponent % 1;
-			bool isNormalLow = mAbs >= 1 && mAbs < 10 && ef == 0;
-			if(eAbs < ThresholdDouble && isNormalLow || eAbs >= ThresholdDouble && mAbs == 1) {
+			bool ismsig = eAbs < ThresholdMod1Double, isNormalLow = mAbs >= 1 && mAbs < 10 && ef == 0;
+			if(ismsig && isNormalLow || !ismsig && mAbs == 1) {
 				return;
 			}
 			if(IsZero()) {
@@ -396,9 +418,9 @@ namespace BreakInfinity {
 				this = NaN;
 				return;
 			}
-			bool ismi = double.IsInfinity(Mantissa);
+			bool ismi = double.IsInfinity(Mantissa), ismn = double.IsNegative(Mantissa);
 			if(double.IsInfinity(Exponent)) {
-				this = double.IsNegative(Exponent) ? ismi ? NaN : Zero : double.IsNegative(Mantissa) ? NegativeInfinity : PositiveInfinity;
+				this = double.IsNegative(Exponent) ? ismi ? NaN : Zero : ismn ? NegativeInfinity : PositiveInfinity;
 				return;
 			}
 			if(ismi) {
@@ -406,12 +428,16 @@ namespace BreakInfinity {
 				return;
 			}
 			if(!isNormalLow) {
-				int eo = (int)Math.Floor(Math.Log10(mAbs) + ef), eo1 = eo / 2, eo2 = eo1 + eo % 2;
-				Mantissa = Mantissa / GetPowerOf10(eo1) / GetPowerOf10(eo2) * Math.Pow(10, ef);
+				int eo = (int)Math.Floor(Math.Log10(mAbs) + ef);
 				Exponent = Math.Truncate(Exponent) + eo;
+				ismsig = Math.Abs(Exponent) < ThresholdMod1Double;
+				if(ismsig) {
+					int eo1 = eo / 2, eo2 = eo1 + eo % 2;
+					Mantissa = Mantissa / GetPowerOf10(eo1) / GetPowerOf10(eo2) * Math.Pow(10, ef);
+				}
 			}
-			if(Math.Abs(Exponent) >= ThresholdDouble) {
-				Mantissa = 1;
+			if(!ismsig) {
+				Mantissa = ismn ? -1 : 1;
 			}
 		}
 
@@ -423,10 +449,10 @@ namespace BreakInfinity {
 
 		public void AddMod(BigDouble other) {
 			double diff = Math.Round(Exponent - other.Exponent);
-			if(diff > ThresholdExponent10) {
+			if(diff > ThresholdAdd10Exponent) {
 				return;
 			}
-			if(diff < -ThresholdExponent10) {
+			if(diff < -ThresholdAdd10Exponent) {
 				this = other;
 				return;
 			}
@@ -617,7 +643,7 @@ namespace BreakInfinity {
 		}
 
 		public void TruncateMod(int digits = 0) {
-			if(Exponent > ThresholdExponent1 || !IsFinite()) {
+			if(Exponent > ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
@@ -634,7 +660,7 @@ namespace BreakInfinity {
 		}
 
 		public void FloorMod(int digits = 0) {
-			if(Exponent > ThresholdExponent1 || !IsFinite()) {
+			if(Exponent > ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
@@ -652,7 +678,7 @@ namespace BreakInfinity {
 		}
 
 		public void CeilingMod(int digits = 0) {
-			if(Exponent > ThresholdExponent1 || !IsFinite()) {
+			if(Exponent > ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
@@ -669,8 +695,8 @@ namespace BreakInfinity {
 			return n;
 		}
 
-		public void RoundMod(int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) {
-			if(Exponent > ThresholdExponent1 || !IsFinite()) {
+		public void RoundMod(int digits = 0, MidpointRounding mode = default) {
+			if(Exponent > ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits - 1) {
@@ -681,7 +707,7 @@ namespace BreakInfinity {
 			NormalizeMod();
 		}
 
-		public readonly BigDouble Round(int digits = 0, MidpointRounding mode = MidpointRounding.ToEven) {
+		public readonly BigDouble Round(int digits = 0, MidpointRounding mode = default) {
 			BigDouble n = this;
 			n.RoundMod(digits, mode);
 			return n;
