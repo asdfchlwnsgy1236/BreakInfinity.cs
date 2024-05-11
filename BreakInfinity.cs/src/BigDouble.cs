@@ -1,4 +1,4 @@
-// Copyright 2024 Joonhyo Choi (asdfchlwnsgy1236), licensed under the Apache License Version 2.0.
+// Copyright 2024 Joonhyo Choi (asdfchlwnsgy1236); Apache License Version 2.0.
 
 namespace BreakInfinity {
 	using System;
@@ -130,7 +130,7 @@ namespace BreakInfinity {
 
 		public static int Sign(BigDouble n) => n.Sign();
 
-		public static bool operator ==(BigDouble l, BigDouble r) => l.Equals(r);
+		public static bool operator ==(BigDouble l, BigDouble r) => l.Mantissa == r.Mantissa && l.Exponent == r.Exponent;
 
 		public static bool operator !=(BigDouble l, BigDouble r) => !(l == r);
 
@@ -284,7 +284,7 @@ namespace BreakInfinity {
 
 		public override readonly bool Equals(object other) => other is BigDouble n && Equals(n);
 
-		public readonly bool Equals(BigDouble other) => Mantissa == other.Mantissa && Exponent == other.Exponent;
+		public readonly bool Equals(BigDouble other) => Mantissa.Equals(other.Mantissa) && Exponent.Equals(other.Exponent);
 
 		public override readonly int GetHashCode() => HashCode.Combine(Mantissa, Exponent);
 
@@ -410,12 +410,12 @@ namespace BreakInfinity {
 			if(ismsig && isNormalLow || !ismsig && mAbs == 1) {
 				return;
 			}
-			if(IsZero()) {
-				this = double.IsPositiveInfinity(Exponent) ? NaN : Zero;
-				return;
-			}
 			if(double.IsNaN(Mantissa) || double.IsNaN(Exponent)) {
 				this = NaN;
+				return;
+			}
+			if(IsZero()) {
+				this = double.IsPositiveInfinity(Exponent) ? NaN : Zero;
 				return;
 			}
 			bool ismi = double.IsInfinity(Mantissa), ismn = double.IsNegative(Mantissa);
@@ -429,7 +429,7 @@ namespace BreakInfinity {
 			}
 			if(!isNormalLow) {
 				int eo = (int)Math.Floor(Math.Log10(mAbs) + ef);
-				Exponent = Math.Truncate(Exponent) + eo;
+				Exponent = Math.Truncate(Exponent + eo);
 				ismsig = Math.Abs(Exponent) < ThresholdMod1Double;
 				if(ismsig) {
 					int eo1 = eo / 2, eo2 = eo1 + eo % 2;
