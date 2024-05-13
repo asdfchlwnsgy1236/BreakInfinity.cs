@@ -53,21 +53,44 @@ namespace BreakInfinityTests {
 			[NaN, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
 		];
 
-		private static void AssertBigDoubleIsEqualTo(BigDouble n, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent) {
-			Assert.Multiple(() => {
-				Assert.That(n.Mantissa, Is.EqualTo(expectedMantissa).Within(toleranceMantissa).Ulps);
-				Assert.That(n.Exponent, Is.EqualTo(expectedExponent).Within(toleranceExponent).Ulps);
+		private static readonly object[][] GetPowerOf10IntData = [
+			[0, 1, ToleranceLow],
+			[-10, 1e-10, ToleranceLow],
+			[10, 1e10, ToleranceLow],
+			[-323, 1e-323, ToleranceLow],
+			[308, 1e308, ToleranceLow]
+		];
+
+		private static readonly object[][] GetStandardNameIntData = [
+			[0, ""],
+			[3, "K"],
+			[6, "M"],
+			[65, "Vig"],
+			[66, ""]
+		];
+
+		private static void AssertDoubleEqual(double n, double expected, long tolerance) => Assert.That(n, Is.EqualTo(expected).Within(tolerance).Ulps);
+
+		private static void AssertBigDoubleEqual(BigDouble n, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
+			=> Assert.Multiple(() => {
+				AssertDoubleEqual(n.Mantissa, expectedMantissa, toleranceMantissa);
+				AssertDoubleEqual(n.Exponent, expectedExponent, toleranceExponent);
 			});
-		}
+
+		private static void AssertStringEqual(string s, string expected) => Assert.That(s, Is.EqualTo(expected).IgnoreCase);
 
 		[TestCaseSource(nameof(ConstructorDoubleDoubleData))]
-		public void ConstructorDoubleDouble(double mantissa, double exponent, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent) {
-			AssertBigDoubleIsEqualTo(new(mantissa, exponent), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
-		}
+		public void ConstructorDoubleDouble(double mantissa, double exponent, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
+			=> AssertBigDoubleEqual(new(mantissa, exponent), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 
 		[TestCaseSource(nameof(ConstructorDoubleData))]
-		public void ConstructorDouble(double d, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent) {
-			AssertBigDoubleIsEqualTo(new(d), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
-		}
+		public void ConstructorDouble(double d, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
+			=> AssertBigDoubleEqual(new(d), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
+
+		[TestCaseSource(nameof(GetPowerOf10IntData))]
+		public void GetPowerOf10Int(int power, double expected, long tolerance) => AssertDoubleEqual(BigDouble.GetPowerOf10(power), expected, tolerance);
+
+		[TestCaseSource(nameof(GetStandardNameIntData))]
+		public void GetStandardNameInt(int power, string expected) => AssertStringEqual(BigDouble.GetStandardName(power), expected);
 	}
 }

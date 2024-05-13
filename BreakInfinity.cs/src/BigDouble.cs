@@ -112,7 +112,7 @@ namespace BreakInfinity {
 
 		public static double GetPowerOf10(int power) => PowersOf10[power + DoubleZeroExponentIndex];
 
-		public static string GetStandardName(int power) => power < 3 || power >= StandardNotationNames.Length ? "" : StandardNotationNames[power / 3 - 1];
+		public static string GetStandardName(int power) => power < 3 || power >= (int)StandardNotationThreshold ? "" : StandardNotationNames[power / 3 - 1];
 
 		public static bool IsFinite(BigDouble n) => n.IsFinite();
 
