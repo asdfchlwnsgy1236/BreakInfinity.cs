@@ -26,13 +26,13 @@ namespace BreakInfinityTests {
 			[12.3, 123456.7, 6.1646029736154491055, 123457, ToleranceMedium, ToleranceLow],
 			[-1.1e30, 1.1e30, -1, 1.1e30, ToleranceLow, ToleranceLow],
 			[1.1e30, 1.1e30, 1, 1.1e30, ToleranceLow, ToleranceLow],
-			[0, NaN, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
 			[0, NegativeInfinity, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			[0, PositiveInfinity, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
 			[NegativeInfinity, NegativeInfinity, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
 			[NegativeInfinity, PositiveInfinity, BigDouble.NegativeInfinity.Mantissa, BigDouble.NegativeInfinity.Exponent, ToleranceLow, ToleranceLow],
 			[PositiveInfinity, NegativeInfinity, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
-			[PositiveInfinity, PositiveInfinity, BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow]
+			[PositiveInfinity, PositiveInfinity, BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow],
+			[0, NaN, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
 		];
 
 		private static readonly object[][] ConstructorDoubleData = [
@@ -69,28 +69,140 @@ namespace BreakInfinityTests {
 			[66, ""]
 		];
 
-		private static void AssertDoubleEqual(double n, double expected, long tolerance) => Assert.That(n, Is.EqualTo(expected).Within(tolerance).Ulps);
+		private static readonly object[][] IsFiniteBigDoubleData = [
+			[BigDouble.Zero, true],
+			[BigDouble.Ten, true],
+			[BigDouble.Epsilon, true],
+			[BigDouble.MinValue, true],
+			[BigDouble.MaxValue, true],
+			[BigDouble.NegativeInfinity, false],
+			[BigDouble.PositiveInfinity, false],
+			[BigDouble.NaN, false]
+		];
 
-		private static void AssertBigDoubleEqual(BigDouble n, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
+		private static readonly object[][] IsNaNBigDoubleData = [
+			[BigDouble.Zero, false],
+			[BigDouble.Ten, false],
+			[BigDouble.Epsilon, false],
+			[BigDouble.MinValue, false],
+			[BigDouble.MaxValue, false],
+			[BigDouble.NegativeInfinity, false],
+			[BigDouble.PositiveInfinity, false],
+			[BigDouble.NaN, true]
+		];
+
+		private static readonly object[][] IsInfinityBigDoubleData = [
+			[BigDouble.Zero, false],
+			[BigDouble.Ten, false],
+			[BigDouble.Epsilon, false],
+			[BigDouble.MinValue, false],
+			[BigDouble.MaxValue, false],
+			[BigDouble.NegativeInfinity, true],
+			[BigDouble.PositiveInfinity, true],
+			[BigDouble.NaN, false]
+		];
+
+		private static readonly object[][] IsNegativeInfinityBigDoubleData = [
+			[BigDouble.Zero, false],
+			[BigDouble.Ten, false],
+			[BigDouble.Epsilon, false],
+			[BigDouble.MinValue, false],
+			[BigDouble.MaxValue, false],
+			[BigDouble.NegativeInfinity, true],
+			[BigDouble.PositiveInfinity, false],
+			[BigDouble.NaN, false]
+		];
+
+		private static readonly object[][] IsPositiveInfinityBigDoubleData = [
+			[BigDouble.Zero, false],
+			[BigDouble.Ten, false],
+			[BigDouble.Epsilon, false],
+			[BigDouble.MinValue, false],
+			[BigDouble.MaxValue, false],
+			[BigDouble.NegativeInfinity, false],
+			[BigDouble.PositiveInfinity, true],
+			[BigDouble.NaN, false]
+		];
+
+		private static readonly object[][] IsNegativeBigDoubleData = [
+			[BigDouble.Zero, false],
+			[-BigDouble.Ten, true],
+			[BigDouble.Epsilon, false],
+			[BigDouble.MinValue, true],
+			[BigDouble.MaxValue, false],
+			[BigDouble.NegativeInfinity, true],
+			[BigDouble.PositiveInfinity, false]
+		];
+
+		private static readonly object[][] IsZeroBigDoubleData = [
+			[BigDouble.Zero, true],
+			[BigDouble.Ten, false],
+			[BigDouble.Epsilon, false],
+			[BigDouble.MinValue, false],
+			[BigDouble.MaxValue, false],
+			[BigDouble.NegativeInfinity, false],
+			[BigDouble.PositiveInfinity, false],
+			[BigDouble.NaN, false]
+		];
+
+		private static readonly object[][] SignBigDoubleData = [
+			[BigDouble.Zero, 0],
+			[-BigDouble.Ten, -1],
+			[BigDouble.Epsilon, 1],
+			[BigDouble.MinValue, -1],
+			[BigDouble.MaxValue, 1],
+			[BigDouble.NegativeInfinity, -1],
+			[BigDouble.PositiveInfinity, 1]
+		];
+
+		private static void AssertEqualSimple<T>(T actual, T expected) => Assert.That(actual, Is.EqualTo(expected));
+
+		private static void AssertEqualDouble(double actual, double expected, long tolerance) => Assert.That(actual, Is.EqualTo(expected).Within(tolerance).Ulps);
+
+		private static void AssertEqualBigDouble(BigDouble actual, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
 			=> Assert.Multiple(() => {
-				AssertDoubleEqual(n.Mantissa, expectedMantissa, toleranceMantissa);
-				AssertDoubleEqual(n.Exponent, expectedExponent, toleranceExponent);
+				AssertEqualDouble(actual.Mantissa, expectedMantissa, toleranceMantissa);
+				AssertEqualDouble(actual.Exponent, expectedExponent, toleranceExponent);
 			});
 
-		private static void AssertStringEqual(string s, string expected) => Assert.That(s, Is.EqualTo(expected).IgnoreCase);
+		private static void AssertEqualString(string actual, string expected) => Assert.That(actual, Is.EqualTo(expected).IgnoreCase);
 
 		[TestCaseSource(nameof(ConstructorDoubleDoubleData))]
 		public void ConstructorDoubleDouble(double mantissa, double exponent, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
-			=> AssertBigDoubleEqual(new(mantissa, exponent), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
+			=> AssertEqualBigDouble(new(mantissa, exponent), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 
 		[TestCaseSource(nameof(ConstructorDoubleData))]
 		public void ConstructorDouble(double d, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
-			=> AssertBigDoubleEqual(new(d), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
+			=> AssertEqualBigDouble(new(d), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 
 		[TestCaseSource(nameof(GetPowerOf10IntData))]
-		public void GetPowerOf10Int(int power, double expected, long tolerance) => AssertDoubleEqual(BigDouble.GetPowerOf10(power), expected, tolerance);
+		public void GetPowerOf10Int(int power, double expected, long tolerance) => AssertEqualDouble(BigDouble.GetPowerOf10(power), expected, tolerance);
 
 		[TestCaseSource(nameof(GetStandardNameIntData))]
-		public void GetStandardNameInt(int power, string expected) => AssertStringEqual(BigDouble.GetStandardName(power), expected);
+		public void GetStandardNameInt(int power, string expected) => AssertEqualString(BigDouble.GetStandardName(power), expected);
+
+		[TestCaseSource(nameof(IsFiniteBigDoubleData))]
+		public void IsFiniteBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsFinite(n), expected);
+
+		[TestCaseSource(nameof(IsNaNBigDoubleData))]
+		public void IsNaNBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsNaN(n), expected);
+
+		[TestCaseSource(nameof(IsInfinityBigDoubleData))]
+		public void IsInfinityBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsInfinity(n), expected);
+
+		[TestCaseSource(nameof(IsNegativeInfinityBigDoubleData))]
+		public void IsNegativeInfinityBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsNegativeInfinity(n), expected);
+
+		[TestCaseSource(nameof(IsPositiveInfinityBigDoubleData))]
+		public void IsPositiveInfinityBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsPositiveInfinity(n), expected);
+
+		[TestCaseSource(nameof(IsNegativeBigDoubleData))]
+		public void IsNegativeBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsNegative(n), expected);
+
+		[TestCaseSource(nameof(IsZeroBigDoubleData))]
+		public void IsZeroBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsZero(n), expected);
+
+		[TestCaseSource(nameof(SignBigDoubleData))]
+		public void SignBigDouble(BigDouble n, int expected) => AssertEqualSimple(BigDouble.Sign(n), expected);
 	}
 }

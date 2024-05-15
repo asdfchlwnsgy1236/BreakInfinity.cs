@@ -120,9 +120,9 @@ namespace BreakInfinity {
 
 		public static bool IsInfinity(BigDouble n) => n.IsInfinity();
 
-		public static bool IsPositiveInfinity(BigDouble n) => n.IsPositiveInfinity();
-
 		public static bool IsNegativeInfinity(BigDouble n) => n.IsNegativeInfinity();
+
+		public static bool IsPositiveInfinity(BigDouble n) => n.IsPositiveInfinity();
 
 		public static bool IsNegative(BigDouble n) => n.IsNegative();
 
@@ -256,9 +256,9 @@ namespace BreakInfinity {
 
 		public readonly bool IsInfinity() => double.IsInfinity(Mantissa);
 
-		public readonly bool IsPositiveInfinity() => double.IsPositiveInfinity(Mantissa);
-
 		public readonly bool IsNegativeInfinity() => double.IsNegativeInfinity(Mantissa);
+
+		public readonly bool IsPositiveInfinity() => double.IsPositiveInfinity(Mantissa);
 
 		public readonly bool IsNegative() => double.IsNegative(Mantissa);
 
