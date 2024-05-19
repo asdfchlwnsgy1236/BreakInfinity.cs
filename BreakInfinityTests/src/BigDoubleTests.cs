@@ -15,6 +15,8 @@ namespace BreakInfinityTests {
 		private const long ToleranceMedium = 1L << 16;
 		private const long ToleranceHigh = 1L << 32;
 
+		// TODO: Reduce test case redundancy. Maybe comparing to the double equivalent when within its range might help.
+
 		private static readonly object[][] ConstructorDoubleDoubleData = [
 			[-0.0, -0.0, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			[0, 123, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
@@ -71,8 +73,8 @@ namespace BreakInfinityTests {
 
 		private static readonly object[][] IsFiniteBigDoubleData = [
 			[BigDouble.Zero, true],
-			[BigDouble.Ten, true],
 			[BigDouble.Epsilon, true],
+			[BigDouble.Ten, true],
 			[BigDouble.MinValue, true],
 			[BigDouble.MaxValue, true],
 			[BigDouble.NegativeInfinity, false],
@@ -82,8 +84,8 @@ namespace BreakInfinityTests {
 
 		private static readonly object[][] IsNaNBigDoubleData = [
 			[BigDouble.Zero, false],
-			[BigDouble.Ten, false],
 			[BigDouble.Epsilon, false],
+			[BigDouble.Ten, false],
 			[BigDouble.MinValue, false],
 			[BigDouble.MaxValue, false],
 			[BigDouble.NegativeInfinity, false],
@@ -93,8 +95,8 @@ namespace BreakInfinityTests {
 
 		private static readonly object[][] IsInfinityBigDoubleData = [
 			[BigDouble.Zero, false],
-			[BigDouble.Ten, false],
 			[BigDouble.Epsilon, false],
+			[BigDouble.Ten, false],
 			[BigDouble.MinValue, false],
 			[BigDouble.MaxValue, false],
 			[BigDouble.NegativeInfinity, true],
@@ -104,8 +106,8 @@ namespace BreakInfinityTests {
 
 		private static readonly object[][] IsNegativeInfinityBigDoubleData = [
 			[BigDouble.Zero, false],
-			[BigDouble.Ten, false],
 			[BigDouble.Epsilon, false],
+			[BigDouble.Ten, false],
 			[BigDouble.MinValue, false],
 			[BigDouble.MaxValue, false],
 			[BigDouble.NegativeInfinity, true],
@@ -115,8 +117,8 @@ namespace BreakInfinityTests {
 
 		private static readonly object[][] IsPositiveInfinityBigDoubleData = [
 			[BigDouble.Zero, false],
-			[BigDouble.Ten, false],
 			[BigDouble.Epsilon, false],
+			[BigDouble.Ten, false],
 			[BigDouble.MinValue, false],
 			[BigDouble.MaxValue, false],
 			[BigDouble.NegativeInfinity, false],
@@ -126,8 +128,8 @@ namespace BreakInfinityTests {
 
 		private static readonly object[][] IsNegativeBigDoubleData = [
 			[BigDouble.Zero, false],
-			[-BigDouble.Ten, true],
 			[BigDouble.Epsilon, false],
+			[-BigDouble.Ten, true],
 			[BigDouble.MinValue, true],
 			[BigDouble.MaxValue, false],
 			[BigDouble.NegativeInfinity, true],
@@ -136,8 +138,8 @@ namespace BreakInfinityTests {
 
 		private static readonly object[][] IsZeroBigDoubleData = [
 			[BigDouble.Zero, true],
-			[BigDouble.Ten, false],
 			[BigDouble.Epsilon, false],
+			[BigDouble.Ten, false],
 			[BigDouble.MinValue, false],
 			[BigDouble.MaxValue, false],
 			[BigDouble.NegativeInfinity, false],
@@ -147,12 +149,74 @@ namespace BreakInfinityTests {
 
 		private static readonly object[][] SignBigDoubleData = [
 			[BigDouble.Zero, 0],
-			[-BigDouble.Ten, -1],
 			[BigDouble.Epsilon, 1],
+			[-BigDouble.Ten, -1],
 			[BigDouble.MinValue, -1],
 			[BigDouble.MaxValue, 1],
 			[BigDouble.NegativeInfinity, -1],
 			[BigDouble.PositiveInfinity, 1]
+		];
+
+		private static readonly object[][] EqualityOperatorBigDoubleBigDoubleData = [
+			[BigDouble.Zero, BigDouble.Zero, true],
+			[BigDouble.One, BigDouble.Ten, false],
+			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), false],
+			[BigDouble.NegativeInfinity, BigDouble.NegativeInfinity, true],
+			[BigDouble.PositiveInfinity, BigDouble.PositiveInfinity, true],
+			[BigDouble.NaN, BigDouble.NaN, false]
+		];
+
+		private static readonly object[][] InequalityOperatorBigDoubleBigDoubleData = [
+			[BigDouble.Zero, BigDouble.Zero, false],
+			[BigDouble.One, BigDouble.Ten, true],
+			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), true],
+			[BigDouble.NegativeInfinity, BigDouble.NegativeInfinity, false],
+			[BigDouble.PositiveInfinity, BigDouble.PositiveInfinity, false],
+			[BigDouble.NaN, BigDouble.NaN, true]
+		];
+
+		private static readonly object[][] LessThanOperatorBigDoubleBigDoubleData = [
+			[BigDouble.Zero, BigDouble.Zero, false],
+			[BigDouble.Zero, BigDouble.One, true],
+			[BigDouble.Ten, new BigDouble(Math.BitDecrement(10), 0, false), false],
+			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), true],
+			[BigDouble.NegativeInfinity, BigDouble.MinValue, true],
+			[BigDouble.PositiveInfinity, BigDouble.MaxValue, false],
+			[BigDouble.NaN, BigDouble.Zero, false],
+			[BigDouble.NaN, BigDouble.NaN, false]
+		];
+
+		private static readonly object[][] GreaterThanOperatorBigDoubleBigDoubleData = [
+			[BigDouble.Zero, BigDouble.Zero, false],
+			[BigDouble.Zero, BigDouble.One, false],
+			[BigDouble.Ten, new BigDouble(Math.BitDecrement(10), 0, false), true],
+			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), false],
+			[BigDouble.NegativeInfinity, BigDouble.MinValue, false],
+			[BigDouble.PositiveInfinity, BigDouble.MaxValue, true],
+			[BigDouble.NaN, BigDouble.Zero, false],
+			[BigDouble.NaN, BigDouble.NaN, false]
+		];
+
+		private static readonly object[][] LessThanOrEqualOperatorBigDoubleBigDoubleData = [
+			[BigDouble.Zero, BigDouble.Zero, true],
+			[BigDouble.Zero, BigDouble.One, true],
+			[BigDouble.Ten, new BigDouble(Math.BitDecrement(10), 0, false), false],
+			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), true],
+			[BigDouble.NegativeInfinity, BigDouble.MinValue, true],
+			[BigDouble.PositiveInfinity, BigDouble.MaxValue, false],
+			[BigDouble.NaN, BigDouble.Zero, false],
+			[BigDouble.NaN, BigDouble.NaN, false]
+		];
+
+		private static readonly object[][] GreaterThanOrEqualOperatorBigDoubleBigDoubleData = [
+			[BigDouble.Zero, BigDouble.Zero, true],
+			[BigDouble.Zero, BigDouble.One, false],
+			[BigDouble.Ten, new BigDouble(Math.BitDecrement(10), 0, false), true],
+			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), false],
+			[BigDouble.NegativeInfinity, BigDouble.MinValue, false],
+			[BigDouble.PositiveInfinity, BigDouble.MaxValue, true],
+			[BigDouble.NaN, BigDouble.Zero, false],
+			[BigDouble.NaN, BigDouble.NaN, false]
 		];
 
 		private static void AssertEqualSimple<T>(T actual, T expected) => Assert.That(actual, Is.EqualTo(expected));
@@ -172,8 +236,8 @@ namespace BreakInfinityTests {
 			=> AssertEqualBigDouble(new(mantissa, exponent), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 
 		[TestCaseSource(nameof(ConstructorDoubleData))]
-		public void ConstructorDouble(double d, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
-			=> AssertEqualBigDouble(new(d), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
+		public void ConstructorDouble(double n, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
+			=> AssertEqualBigDouble(new(n), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 
 		[TestCaseSource(nameof(GetPowerOf10IntData))]
 		public void GetPowerOf10Int(int power, double expected, long tolerance) => AssertEqualDouble(BigDouble.GetPowerOf10(power), expected, tolerance);
@@ -204,5 +268,23 @@ namespace BreakInfinityTests {
 
 		[TestCaseSource(nameof(SignBigDoubleData))]
 		public void SignBigDouble(BigDouble n, int expected) => AssertEqualSimple(BigDouble.Sign(n), expected);
+
+		[TestCaseSource(nameof(EqualityOperatorBigDoubleBigDoubleData))]
+		public void EqualityOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l == r, expected);
+
+		[TestCaseSource(nameof(InequalityOperatorBigDoubleBigDoubleData))]
+		public void InequalityOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l != r, expected);
+
+		[TestCaseSource(nameof(LessThanOperatorBigDoubleBigDoubleData))]
+		public void LessThanOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l < r, expected);
+
+		[TestCaseSource(nameof(GreaterThanOperatorBigDoubleBigDoubleData))]
+		public void GreaterThanOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l > r, expected);
+
+		[TestCaseSource(nameof(LessThanOrEqualOperatorBigDoubleBigDoubleData))]
+		public void LessThanOrEqualOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l <= r, expected);
+
+		[TestCaseSource(nameof(GreaterThanOrEqualOperatorBigDoubleBigDoubleData))]
+		public void GreaterThanOrEqualOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l >= r, expected);
 	}
 }

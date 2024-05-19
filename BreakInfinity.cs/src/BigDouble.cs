@@ -134,13 +134,19 @@ namespace BreakInfinity {
 
 		public static bool operator !=(BigDouble l, BigDouble r) => !(l == r);
 
-		public static bool operator <(BigDouble l, BigDouble r) => l.CompareTo(r) < 0;
+		public static bool operator <(BigDouble l, BigDouble r) {
+			bool isNegative = l.IsNegative(), isLess = l.Exponent < r.Exponent;
+			return !l.IsFinite() || !r.IsFinite() || l.IsZero() || r.IsZero() || l.Exponent == r.Exponent || isNegative != r.IsNegative() ? l.Mantissa < r.Mantissa : isNegative ? !isLess : isLess;
+		}
 
-		public static bool operator >(BigDouble l, BigDouble r) => l.CompareTo(r) > 0;
+		public static bool operator >(BigDouble l, BigDouble r) {
+			bool isNegative = l.IsNegative(), isGreater = l.Exponent > r.Exponent;
+			return !l.IsFinite() || !r.IsFinite() || l.IsZero() || r.IsZero() || l.Exponent == r.Exponent || isNegative != r.IsNegative() ? l.Mantissa > r.Mantissa : isNegative ? !isGreater : isGreater;
+		}
 
-		public static bool operator <=(BigDouble l, BigDouble r) => l.CompareTo(r) <= 0;
+		public static bool operator <=(BigDouble l, BigDouble r) => l == r || l < r;
 
-		public static bool operator >=(BigDouble l, BigDouble r) => l.CompareTo(r) >= 0;
+		public static bool operator >=(BigDouble l, BigDouble r) => l == r || l > r;
 
 		public static bool TryParse(string s, out BigDouble result) {
 			if(string.IsNullOrEmpty(s)) {
@@ -290,15 +296,15 @@ namespace BreakInfinity {
 
 		public readonly string ToDebugString() => string.Concat("{", $"{Mantissa:g17}, {Exponent:g17}", "}");
 
-		public override readonly string ToString() => ToString(null, null);
+		public override readonly string ToString() => ToCustomString();
 
 		/// <summary>
 		///   This is the implementation of the <see cref="IFormattable"/> interface, but it mostly ignores the typical format string characters. It is still
 		///   possible to use 'G' followed by a number to specify the length (the 'e' in "1e100" is counted as well).
 		/// </summary>
 		/// <param name="format">
-		///   Up to three integers separated by commas that specify the length, decimals, and smallDec values (see the overload of <see cref="ToString"/> that
-		///   takes up to five parameters for what those values affect).
+		///   Up to three integers separated by commas that specify the length, decimals, and smallDec values (see <see cref="ToCustomString"/> for what those
+		///   values affect).
 		/// </param>
 		/// <param name="formatProvider">The format provider to apply to each number component.</param>
 		public readonly string ToString(string format, IFormatProvider formatProvider = null) {
@@ -324,7 +330,7 @@ namespace BreakInfinity {
 					}
 				}
 			}
-			return ToString(length, decimals, smallDec, DefaultNotation, formatProvider);
+			return ToCustomString(length, decimals, smallDec, DefaultNotation, formatProvider);
 		}
 
 		/// <summary>Makes a custom string representation that makes it easier to make this number stay within a certain length.</summary>
@@ -345,7 +351,7 @@ namespace BreakInfinity {
 		///   number is greater than <see cref="ThresholdMod1Double"/>, it stops displaying the mantissa (A in the previous format description) since it is
 		///   always 1.
 		/// </remarks>
-		public readonly string ToString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider formatProvider = null) {
+		public readonly string ToCustomString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider formatProvider = null) {
 			const string NumberFormat = "#,0.###############";
 			double eAbs = Math.Abs(Exponent);
 			bool ismsig = eAbs < ThresholdMod1Double, ismn = double.IsNegative(Mantissa), isen = double.IsNegative(Exponent);
