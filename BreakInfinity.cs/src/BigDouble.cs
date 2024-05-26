@@ -30,8 +30,8 @@ namespace BreakInfinity {
 		private const int ThresholdAdd10Exponent = 17;
 		private const double ThresholdMod1Double = 4503599627370496;
 		private const int DefaultLength = 9;
-		private const int DefaultDecimals = 3;
-		private const int DefaultSmallDec = 0;
+		private const int DefaultDecimals = 6;
+		private const int DefaultSmallDec = 6;
 		private const Notation DefaultNotation = Notation.Scientific;
 
 		private static readonly double[] PowersOf10 = new double[DoubleMaxExponent - DoubleMinExponent];
@@ -41,6 +41,7 @@ namespace BreakInfinity {
 		private static readonly BigDouble Ln10 = new(2.3025850929940456840, 0, false);
 
 		public static readonly BigDouble Zero = new(0, 0, false);
+		public static readonly BigDouble Tenth = new(1, -1, false);
 		public static readonly BigDouble Half = new(5, -1, false);
 		public static readonly BigDouble One = new(1, 0, false);
 		public static readonly BigDouble Two = new(2, 0, false);
@@ -339,7 +340,10 @@ namespace BreakInfinity {
 		///   decimal point).
 		/// </param>
 		/// <param name="decimals">The maximum number of digits to show after the decimal point when this number requires abbreviation.</param>
-		/// <param name="smallDec">The maximum number of digits to show after the decimal point when this number is small enough to be shown as is.</param>
+		/// <param name="smallDec">
+		///   The maximum number of significant digits to show when this number is small enough to be shown as is (ignored if less than the number of digits
+		///   before the decimal point).
+		/// </param>
 		/// <param name="notation">
 		///   The type of notation to use when abbreviating this number (standard = letters like k and m, scientific = AeB = A * 10 ^ B, engineering =
 		///   scientific but exponent fixed to multiples of 3).
@@ -354,17 +358,8 @@ namespace BreakInfinity {
 		public readonly string ToCustomString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider formatProvider = null) {
 			const string NumberFormat = "#,0.###############";
 			double eAbs = Math.Abs(Exponent);
-			bool ismsig = eAbs < ThresholdMod1Double, ismn = double.IsNegative(Mantissa), isen = double.IsNegative(Exponent);
-			if(ismsig) {
-				--length;
-			}
-			if(ismn) {
-				--length;
-			}
-			if(isen) {
-				--length;
-			}
-			length = Math.Clamp(length, 2, 15);
+			bool ismsig = eAbs < ThresholdMod1Double, ismn = double.IsNegative(Mantissa);
+			length = Math.Clamp(length - (ismsig ? 1 : 0) - (ismn ? 1 : 0), 2, 15);
 			decimals = Math.Clamp(decimals, 0, 15);
 			smallDec = Math.Clamp(smallDec, 0, 15);
 			if(!IsFinite()) {
@@ -374,12 +369,10 @@ namespace BreakInfinity {
 				int ei = (int)Exponent;
 				return Truncate(Mantissa * GetPowerOf10(ei), Math.Clamp(smallDec - ei, 0, Math.Min(length - ei, length))).ToString(NumberFormat, formatProvider);
 			}
+			length = Math.Max(double.IsNegative(Exponent) ? length - 1 : length, 2);
 			int ee = (int)Math.Log10(eAbs);
 			double m = Truncate(Mantissa, Math.Max(Math.Min(decimals, length - 2 - ee), 0));
 			double me = Truncate(Exponent / GetPowerOf10(ee), Math.Max(Math.Min(decimals, length - 4 - (int)Math.Log10(ee)), 0));
-			if(isen) {
-				me = -me;
-			}
 			double offset = Exponent % 3;
 			if(offset < 0) {
 				offset += 3;

@@ -1,5 +1,4 @@
 ﻿// Copyright 2024 Joonhyo Choi (asdfchlwnsgy1236); Apache License Version 2.0.
-
 namespace BreakInfinityTests {
 	using BreakInfinity;
 
@@ -13,11 +12,8 @@ namespace BreakInfinityTests {
 		private const double NaN = double.NaN;
 		private const long ToleranceLow = 1L << 2;
 		private const long ToleranceMedium = 1L << 16;
-		private const long ToleranceHigh = 1L << 32;
 
-		// TODO: Reduce test case redundancy. Maybe comparing to the double equivalent when within its range might help.
-
-		private static readonly object[][] ConstructorDoubleDoubleData = [
+		private static readonly object[][] CasesConstructorDoubleDouble = [
 			[-0.0, -0.0, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			[0, 123, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			[0, 1.23, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
@@ -36,8 +32,7 @@ namespace BreakInfinityTests {
 			[PositiveInfinity, PositiveInfinity, BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow],
 			[0, NaN, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
 		];
-
-		private static readonly object[][] ConstructorDoubleData = [
+		private static readonly object[][] CasesConstructorDouble = [
 			[-0.0, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			[0, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			[-Epsilon, -4.9406564584124654417, -324, ToleranceLow, ToleranceLow],
@@ -54,237 +49,153 @@ namespace BreakInfinityTests {
 			[PositiveInfinity, BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow],
 			[NaN, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
 		];
-
-		private static readonly object[][] GetPowerOf10IntData = [
+		private static readonly object[][] CasesGetPowerOf10Int = [
 			[0, 1, ToleranceLow],
 			[-10, 1e-10, ToleranceLow],
 			[10, 1e10, ToleranceLow],
 			[-323, 1e-323, ToleranceLow],
 			[308, 1e308, ToleranceLow]
 		];
-
-		private static readonly object[][] GetStandardNameIntData = [
+		private static readonly object[][] CasesGetStandardNameInt = [
 			[0, ""],
 			[3, "K"],
 			[6, "M"],
 			[65, "Vig"],
 			[66, ""]
 		];
-
-		private static readonly object[][] IsFiniteBigDoubleData = [
-			[BigDouble.Zero, true],
-			[BigDouble.Epsilon, true],
-			[BigDouble.Ten, true],
-			[BigDouble.MinValue, true],
-			[BigDouble.MaxValue, true],
-			[BigDouble.NegativeInfinity, false],
-			[BigDouble.PositiveInfinity, false],
-			[BigDouble.NaN, false]
+		private static readonly object[][] CasesUnaryBigDoubleStrictSpecialNoNaN = [
+			[BigDouble.Zero, 0.0],
+			[BigDouble.NegativeInfinity, double.NegativeInfinity],
+			[BigDouble.PositiveInfinity, double.PositiveInfinity]
 		];
-
-		private static readonly object[][] IsNaNBigDoubleData = [
-			[BigDouble.Zero, false],
-			[BigDouble.Epsilon, false],
-			[BigDouble.Ten, false],
-			[BigDouble.MinValue, false],
-			[BigDouble.MaxValue, false],
-			[BigDouble.NegativeInfinity, false],
-			[BigDouble.PositiveInfinity, false],
-			[BigDouble.NaN, true]
+		private static readonly object[][] CasesUnaryBigDoubleStrictSpecial = [
+			.. CasesUnaryBigDoubleStrictSpecialNoNaN,
+			[BigDouble.NaN, double.NaN]
 		];
-
-		private static readonly object[][] IsInfinityBigDoubleData = [
-			[BigDouble.Zero, false],
-			[BigDouble.Epsilon, false],
-			[BigDouble.Ten, false],
-			[BigDouble.MinValue, false],
-			[BigDouble.MaxValue, false],
-			[BigDouble.NegativeInfinity, true],
-			[BigDouble.PositiveInfinity, true],
-			[BigDouble.NaN, false]
+		private static readonly object[][] CasesUnaryBigDoubleSpecialNoNaN = [
+			.. CasesUnaryBigDoubleStrictSpecialNoNaN,
+			[-BigDouble.Epsilon, -double.Epsilon],
+			[BigDouble.Epsilon, double.Epsilon],
+			[BigDouble.MinValue, double.MinValue],
+			[BigDouble.MaxValue, double.MaxValue]
 		];
-
-		private static readonly object[][] IsNegativeInfinityBigDoubleData = [
-			[BigDouble.Zero, false],
-			[BigDouble.Epsilon, false],
-			[BigDouble.Ten, false],
-			[BigDouble.MinValue, false],
-			[BigDouble.MaxValue, false],
-			[BigDouble.NegativeInfinity, true],
-			[BigDouble.PositiveInfinity, false],
-			[BigDouble.NaN, false]
+		private static readonly object[][] CasesUnaryBigDoubleSpecial = [
+			.. CasesUnaryBigDoubleSpecialNoNaN,
+			[BigDouble.NaN, double.NaN]
 		];
-
-		private static readonly object[][] IsPositiveInfinityBigDoubleData = [
-			[BigDouble.Zero, false],
-			[BigDouble.Epsilon, false],
-			[BigDouble.Ten, false],
-			[BigDouble.MinValue, false],
-			[BigDouble.MaxValue, false],
-			[BigDouble.NegativeInfinity, false],
-			[BigDouble.PositiveInfinity, true],
-			[BigDouble.NaN, false]
+		private static readonly object[][] CasesUnaryBigDoubleGeneral = [
+			[new BigDouble(-1.234, -6, false), -1.234e-6],
+			[new BigDouble(1.234, -6, false), 1.234e-6],
+			[-BigDouble.Tenth, -0.1],
+			[BigDouble.Tenth, 0.1],
+			[-BigDouble.Half, -0.5],
+			[BigDouble.Half, 0.5],
+			[-BigDouble.One, -1.0],
+			[BigDouble.One, 1.0],
+			[-BigDouble.Two, -2.0],
+			[BigDouble.Two, 2.0],
+			[-BigDouble.Ten, -10.0],
+			[BigDouble.Ten, 10.0],
+			[new BigDouble(-1.234, 6, false), -1.234e6],
+			[new BigDouble(1.234, 6, false), 1.234e6]
 		];
-
-		private static readonly object[][] IsNegativeBigDoubleData = [
-			[BigDouble.Zero, false],
-			[BigDouble.Epsilon, false],
-			[-BigDouble.Ten, true],
-			[BigDouble.MinValue, true],
-			[BigDouble.MaxValue, false],
-			[BigDouble.NegativeInfinity, true],
-			[BigDouble.PositiveInfinity, false]
+		private static readonly object[][] CasesUnaryBigDoubleStrictAllNoNaN = [
+			.. CasesUnaryBigDoubleStrictSpecialNoNaN,
+			.. CasesUnaryBigDoubleGeneral
 		];
-
-		private static readonly object[][] IsZeroBigDoubleData = [
-			[BigDouble.Zero, true],
-			[BigDouble.Epsilon, false],
-			[BigDouble.Ten, false],
-			[BigDouble.MinValue, false],
-			[BigDouble.MaxValue, false],
-			[BigDouble.NegativeInfinity, false],
-			[BigDouble.PositiveInfinity, false],
-			[BigDouble.NaN, false]
+		private static readonly object[][] CasesUnaryBigDoubleStrictAll = [
+			.. CasesUnaryBigDoubleStrictSpecial,
+			.. CasesUnaryBigDoubleGeneral
 		];
-
-		private static readonly object[][] SignBigDoubleData = [
-			[BigDouble.Zero, 0],
-			[BigDouble.Epsilon, 1],
-			[-BigDouble.Ten, -1],
-			[BigDouble.MinValue, -1],
-			[BigDouble.MaxValue, 1],
-			[BigDouble.NegativeInfinity, -1],
-			[BigDouble.PositiveInfinity, 1]
+		private static readonly object[][] CasesUnaryBigDoubleAllNoNaN = [
+			.. CasesUnaryBigDoubleSpecialNoNaN,
+			.. CasesUnaryBigDoubleGeneral
 		];
-
-		private static readonly object[][] EqualityOperatorBigDoubleBigDoubleData = [
-			[BigDouble.Zero, BigDouble.Zero, true],
-			[BigDouble.One, BigDouble.Ten, false],
-			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), false],
-			[BigDouble.NegativeInfinity, BigDouble.NegativeInfinity, true],
-			[BigDouble.PositiveInfinity, BigDouble.PositiveInfinity, true],
-			[BigDouble.NaN, BigDouble.NaN, false]
+		private static readonly object[][] CasesUnaryBigDoubleAll = [
+			.. CasesUnaryBigDoubleSpecial,
+			.. CasesUnaryBigDoubleGeneral
 		];
+		private static readonly object[][] CasesBinaryBigDoubleAll;
 
-		private static readonly object[][] InequalityOperatorBigDoubleBigDoubleData = [
-			[BigDouble.Zero, BigDouble.Zero, false],
-			[BigDouble.One, BigDouble.Ten, true],
-			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), true],
-			[BigDouble.NegativeInfinity, BigDouble.NegativeInfinity, false],
-			[BigDouble.PositiveInfinity, BigDouble.PositiveInfinity, false],
-			[BigDouble.NaN, BigDouble.NaN, true]
-		];
-
-		private static readonly object[][] LessThanOperatorBigDoubleBigDoubleData = [
-			[BigDouble.Zero, BigDouble.Zero, false],
-			[BigDouble.Zero, BigDouble.One, true],
-			[BigDouble.Ten, new BigDouble(Math.BitDecrement(10), 0, false), false],
-			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), true],
-			[BigDouble.NegativeInfinity, BigDouble.MinValue, true],
-			[BigDouble.PositiveInfinity, BigDouble.MaxValue, false],
-			[BigDouble.NaN, BigDouble.Zero, false],
-			[BigDouble.NaN, BigDouble.NaN, false]
-		];
-
-		private static readonly object[][] GreaterThanOperatorBigDoubleBigDoubleData = [
-			[BigDouble.Zero, BigDouble.Zero, false],
-			[BigDouble.Zero, BigDouble.One, false],
-			[BigDouble.Ten, new BigDouble(Math.BitDecrement(10), 0, false), true],
-			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), false],
-			[BigDouble.NegativeInfinity, BigDouble.MinValue, false],
-			[BigDouble.PositiveInfinity, BigDouble.MaxValue, true],
-			[BigDouble.NaN, BigDouble.Zero, false],
-			[BigDouble.NaN, BigDouble.NaN, false]
-		];
-
-		private static readonly object[][] LessThanOrEqualOperatorBigDoubleBigDoubleData = [
-			[BigDouble.Zero, BigDouble.Zero, true],
-			[BigDouble.Zero, BigDouble.One, true],
-			[BigDouble.Ten, new BigDouble(Math.BitDecrement(10), 0, false), false],
-			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), true],
-			[BigDouble.NegativeInfinity, BigDouble.MinValue, true],
-			[BigDouble.PositiveInfinity, BigDouble.MaxValue, false],
-			[BigDouble.NaN, BigDouble.Zero, false],
-			[BigDouble.NaN, BigDouble.NaN, false]
-		];
-
-		private static readonly object[][] GreaterThanOrEqualOperatorBigDoubleBigDoubleData = [
-			[BigDouble.Zero, BigDouble.Zero, true],
-			[BigDouble.Zero, BigDouble.One, false],
-			[BigDouble.Ten, new BigDouble(Math.BitDecrement(10), 0, false), true],
-			[BigDouble.Ten, new BigDouble(Math.BitIncrement(1), 1, false), false],
-			[BigDouble.NegativeInfinity, BigDouble.MinValue, false],
-			[BigDouble.PositiveInfinity, BigDouble.MaxValue, true],
-			[BigDouble.NaN, BigDouble.Zero, false],
-			[BigDouble.NaN, BigDouble.NaN, false]
-		];
+		static BigDoubleTests() {
+			int count = CasesUnaryBigDoubleStrictAll.Length;
+			CasesBinaryBigDoubleAll = new object[count * count][];
+			for(int a = 0, index = 0; a < count; ++a) {
+				for(int b = 0; b < count; ++b, ++index) {
+					CasesBinaryBigDoubleAll[index] = [.. CasesUnaryBigDoubleStrictAll[a], .. CasesUnaryBigDoubleStrictAll[b]];
+				}
+			}
+		}
 
 		private static void AssertEqualSimple<T>(T actual, T expected) => Assert.That(actual, Is.EqualTo(expected));
 
 		private static void AssertEqualDouble(double actual, double expected, long tolerance) => Assert.That(actual, Is.EqualTo(expected).Within(tolerance).Ulps);
 
-		private static void AssertEqualBigDouble(BigDouble actual, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
-			=> Assert.Multiple(() => {
-				AssertEqualDouble(actual.Mantissa, expectedMantissa, toleranceMantissa);
-				AssertEqualDouble(actual.Exponent, expectedExponent, toleranceExponent);
-			});
+		private static void AssertEqualBigDoubleComponents(BigDouble actual, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
+		=> Assert.Multiple(() => {
+			AssertEqualDouble(actual.Mantissa, expectedMantissa, toleranceMantissa);
+			AssertEqualDouble(actual.Exponent, expectedExponent, toleranceExponent);
+		});
+
+		private static void AssertEqualBigDouble(BigDouble actual, BigDouble expected, long toleranceMantissa, long toleranceExponent)
+		=> AssertEqualBigDoubleComponents(actual, expected.Mantissa, expected.Exponent, toleranceMantissa, toleranceExponent);
 
 		private static void AssertEqualString(string actual, string expected) => Assert.That(actual, Is.EqualTo(expected).IgnoreCase);
 
-		[TestCaseSource(nameof(ConstructorDoubleDoubleData))]
+		[TestCaseSource(nameof(CasesConstructorDoubleDouble))]
 		public void ConstructorDoubleDouble(double mantissa, double exponent, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
-			=> AssertEqualBigDouble(new(mantissa, exponent), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
+		=> AssertEqualBigDoubleComponents(new(mantissa, exponent), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 
-		[TestCaseSource(nameof(ConstructorDoubleData))]
+		[TestCaseSource(nameof(CasesConstructorDouble))]
 		public void ConstructorDouble(double n, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
-			=> AssertEqualBigDouble(new(n), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
+		=> AssertEqualBigDoubleComponents(new(n), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 
-		[TestCaseSource(nameof(GetPowerOf10IntData))]
+		[TestCaseSource(nameof(CasesGetPowerOf10Int))]
 		public void GetPowerOf10Int(int power, double expected, long tolerance) => AssertEqualDouble(BigDouble.GetPowerOf10(power), expected, tolerance);
 
-		[TestCaseSource(nameof(GetStandardNameIntData))]
+		[TestCaseSource(nameof(CasesGetStandardNameInt))]
 		public void GetStandardNameInt(int power, string expected) => AssertEqualString(BigDouble.GetStandardName(power), expected);
 
-		[TestCaseSource(nameof(IsFiniteBigDoubleData))]
-		public void IsFiniteBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsFinite(n), expected);
+		[TestCaseSource(nameof(CasesUnaryBigDoubleAll))]
+		public void IsFiniteBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.IsFinite(n), double.IsFinite(d));
 
-		[TestCaseSource(nameof(IsNaNBigDoubleData))]
-		public void IsNaNBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsNaN(n), expected);
+		[TestCaseSource(nameof(CasesUnaryBigDoubleAll))]
+		public void IsNaNBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.IsNaN(n), double.IsNaN(d));
 
-		[TestCaseSource(nameof(IsInfinityBigDoubleData))]
-		public void IsInfinityBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsInfinity(n), expected);
+		[TestCaseSource(nameof(CasesUnaryBigDoubleAll))]
+		public void IsInfinityBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.IsInfinity(n), double.IsInfinity(d));
 
-		[TestCaseSource(nameof(IsNegativeInfinityBigDoubleData))]
-		public void IsNegativeInfinityBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsNegativeInfinity(n), expected);
+		[TestCaseSource(nameof(CasesUnaryBigDoubleAll))]
+		public void IsNegativeInfinityBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.IsNegativeInfinity(n), double.IsNegativeInfinity(d));
 
-		[TestCaseSource(nameof(IsPositiveInfinityBigDoubleData))]
-		public void IsPositiveInfinityBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsPositiveInfinity(n), expected);
+		[TestCaseSource(nameof(CasesUnaryBigDoubleAll))]
+		public void IsPositiveInfinityBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.IsPositiveInfinity(n), double.IsPositiveInfinity(d));
 
-		[TestCaseSource(nameof(IsNegativeBigDoubleData))]
-		public void IsNegativeBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsNegative(n), expected);
+		[TestCaseSource(nameof(CasesUnaryBigDoubleAll))]
+		public void IsNegativeBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.IsNegative(n), double.IsNegative(d));
 
-		[TestCaseSource(nameof(IsZeroBigDoubleData))]
-		public void IsZeroBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsZero(n), expected);
+		[TestCaseSource(nameof(CasesUnaryBigDoubleAll))]
+		public void IsZeroBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.IsZero(n), d == 0);
 
-		[TestCaseSource(nameof(SignBigDoubleData))]
-		public void SignBigDouble(BigDouble n, int expected) => AssertEqualSimple(BigDouble.Sign(n), expected);
+		[TestCaseSource(nameof(CasesUnaryBigDoubleAllNoNaN))]
+		public void SignBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.Sign(n), Math.Sign(d));
 
-		[TestCaseSource(nameof(EqualityOperatorBigDoubleBigDoubleData))]
-		public void EqualityOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l == r, expected);
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void EqualityOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl == nr, dl == dr);
 
-		[TestCaseSource(nameof(InequalityOperatorBigDoubleBigDoubleData))]
-		public void InequalityOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l != r, expected);
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void InequalityOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl != nr, dl != dr);
 
-		[TestCaseSource(nameof(LessThanOperatorBigDoubleBigDoubleData))]
-		public void LessThanOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l < r, expected);
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void LessThanOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl < nr, dl < dr);
 
-		[TestCaseSource(nameof(GreaterThanOperatorBigDoubleBigDoubleData))]
-		public void GreaterThanOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l > r, expected);
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void GreaterThanOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl > nr, dl > dr);
 
-		[TestCaseSource(nameof(LessThanOrEqualOperatorBigDoubleBigDoubleData))]
-		public void LessThanOrEqualOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l <= r, expected);
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void LessThanOrEqualOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl <= nr, dl <= dr);
 
-		[TestCaseSource(nameof(GreaterThanOrEqualOperatorBigDoubleBigDoubleData))]
-		public void GreaterThanOrEqualOperatorBigDoubleBigDouble(BigDouble l, BigDouble r, bool expected) => AssertEqualSimple(l >= r, expected);
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void GreaterThanOrEqualOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl >= nr, dl >= dr);
 	}
 }
