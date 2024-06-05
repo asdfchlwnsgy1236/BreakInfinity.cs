@@ -2,8 +2,18 @@
 
 namespace BreakInfinity {
 	using System;
+	using System.Collections.Generic;
+	using System.Globalization;
 
+#nullable enable
+
+#if UNITY_2021_2_OR_NEWER
 	[Serializable]
+#elif NET5_0_OR_GREATER
+#else
+#error The current compiler is too old for this code (requires C# 9).
+#error version
+#endif
 	public enum Notation {
 		Standard,
 		Scientific,
@@ -21,7 +31,9 @@ namespace BreakInfinity {
 	///   </para>
 	///   <para>Note that the instance functions suffixed with "Mod" modify the instance they are called on instead of making a copy.</para>
 	/// </summary>
+#if UNITY_2021_2_OR_NEWER
 	[Serializable]
+#endif
 	public struct BigDouble: IComparable, IComparable<BigDouble>, IEquatable<BigDouble>, IFormattable {
 		private const int DoubleMinExponent = -324;
 		private const int DoubleMaxExponent = 308;
@@ -36,8 +48,9 @@ namespace BreakInfinity {
 
 		private static readonly double[] PowersOf10 = new double[DoubleMaxExponent - DoubleMinExponent];
 		private static readonly string[] StandardNotationNames = { "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vig" };
+		private static readonly Dictionary<string, double> StandardNotationExponents;
 		private static readonly double StandardNotationThreshold;
-		private static readonly char[] ParseDelimiters = { 'E', 'e' };
+		private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
 		private static readonly BigDouble Ln10 = new(2.3025850929940456840, 0, false);
 
 		public static readonly BigDouble Zero = new(0, 0, false);
@@ -61,6 +74,10 @@ namespace BreakInfinity {
 		static BigDouble() {
 			for(int a = 0, power = DoubleMinExponent + 1; a < PowersOf10.Length; ++a, ++power) {
 				PowersOf10[a] = Math.Pow(10, power);
+			}
+			StandardNotationExponents = new(StandardNotationNames.Length, StringComparer.InvariantCultureIgnoreCase);
+			for(int a = 0; a < StandardNotationNames.Length; ++a) {
+				StandardNotationExponents[StandardNotationNames[a]] = (a + 1) * 3;
 			}
 			StandardNotationThreshold = (StandardNotationNames.Length + 1) * 3;
 		}
@@ -149,21 +166,49 @@ namespace BreakInfinity {
 
 		public static bool operator >=(BigDouble l, BigDouble r) => l == r || l > r;
 
-		public static bool TryParse(string s, out BigDouble result) {
+		public static bool TryParse(string s, out BigDouble result, IFormatProvider? formatProvider = null) {
 			if(string.IsNullOrEmpty(s)) {
 				result = default;
 				return false;
 			}
-			string[] split = s.Split(ParseDelimiters, 1);
-			double[] me = { 0, 0 };
-			for(int a = 0; a < split.Length; ++a) {
-				if(!double.TryParse(split[a], out me[a])) {
+			formatProvider ??= DefaultCulture;
+			int epos = s.IndexOf('e', StringComparison.InvariantCultureIgnoreCase);
+			double m, e;
+			if(epos >= 0) {
+				if(epos == 0) {
+					m = 1;
+				}
+				else if(epos == 1 && s[0] == '-') {
+					m = -1;
+				}
+				else if(!double.TryParse(s.AsSpan(0, epos), formatProvider, out m)) {
 					result = default;
 					return false;
 				}
+				if(!double.TryParse(s.AsSpan(epos + 1), formatProvider, out e)) {
+					result = default;
+					return false;
+				}
+				result = new(m, e);
+				return true;
 			}
-			result = new(me[0], me[1]);
-			return true;
+			if(double.TryParse(s, formatProvider, out m)) {
+				result = new(m);
+				return true;
+			}
+			int upos;
+			for(upos = s.Length - 1; upos >= 0; --upos) {
+				if(char.IsDigit(s[upos])) {
+					++upos;
+					break;
+				}
+			}
+			if(upos > 0 && upos < s.Length && double.TryParse(s.AsSpan(0, upos), formatProvider, out m) && StandardNotationExponents.TryGetValue(s[upos..], out e)) {
+				result = new(m, e);
+				return true;
+			}
+			result = default;
+			return false;
 		}
 
 		public static implicit operator BigDouble(double n) => new(n);
@@ -273,11 +318,11 @@ namespace BreakInfinity {
 
 		public readonly int Sign() => Math.Sign(Mantissa);
 
-		public readonly int CompareTo(object other) {
-			if(other == null) {
+		public readonly int CompareTo(object? obj) {
+			if(obj == null) {
 				return 1;
 			}
-			if(other is BigDouble n) {
+			if(obj is BigDouble n) {
 				return CompareTo(n);
 			}
 			throw new ArgumentException($"Object must be of type {nameof(BigDouble)}.");
@@ -289,49 +334,37 @@ namespace BreakInfinity {
 			return !IsFinite() || !other.IsFinite() || IsZero() || other.IsZero() || ecmp == 0 || isNegative != other.IsNegative() ? Mantissa.CompareTo(other.Mantissa) : isNegative ? -ecmp : ecmp;
 		}
 
-		public override readonly bool Equals(object other) => other is BigDouble n && Equals(n);
+		public override readonly bool Equals(object? obj) => obj is BigDouble n && Equals(n);
 
 		public readonly bool Equals(BigDouble other) => Mantissa.Equals(other.Mantissa) && Exponent.Equals(other.Exponent);
 
 		public override readonly int GetHashCode() => HashCode.Combine(Mantissa, Exponent);
 
-		public readonly string ToDebugString() => string.Concat("{", $"{Mantissa:g17}, {Exponent:g17}", "}");
+		public readonly string ToDebugString(IFormatProvider? formatProvider = null) {
+			formatProvider ??= DefaultCulture;
+#if NET6_0_OR_GREATER
+			return string.Create(formatProvider, $"{{{Mantissa:g17}, {Exponent:g17}}}");
+#elif NET5_0_OR_GREATER
+			return string.Format(formatProvider, "{{{0:g17}, {1:g17}}}", Mantissa, Exponent);
+#else
+			return string.Format(formatProvider, "{{{0:g17}, {1:g17}{2}", Mantissa, Exponent, "}");
+#endif
+		}
 
 		public override readonly string ToString() => ToCustomString();
 
-		/// <summary>
-		///   This is the implementation of the <see cref="IFormattable"/> interface, but it mostly ignores the typical format string characters. It is still
-		///   possible to use 'G' followed by a number to specify the length (the 'e' in "1e100" is counted as well).
-		/// </summary>
-		/// <param name="format">
-		///   Up to three integers separated by commas that specify the length, decimals, and smallDec values (see <see cref="ToCustomString"/> for what those
-		///   values affect).
-		/// </param>
+		public readonly string ToString(IFormatProvider formatProvider) => ToString(null, formatProvider);
+
+		/// <summary>This is the implementation for <see cref="IFormattable"/> for the cases where a simple string representation is sufficient.</summary>
+		/// <param name="format">The format string to apply to each number component.</param>
 		/// <param name="formatProvider">The format provider to apply to each number component.</param>
-		public readonly string ToString(string format, IFormatProvider formatProvider = null) {
-			int length = DefaultLength, decimals = DefaultDecimals, smallDec = DefaultSmallDec;
-			if(!string.IsNullOrEmpty(format)) {
-				string[] parts = format.Split(',');
-				if(parts.Length <= 3) {
-					int[] parsedValues = { DefaultLength, DefaultDecimals, DefaultSmallDec };
-					bool isValid = true;
-					for(int a = 0; a < parts.Length; ++a) {
-						if(!int.TryParse(parts[a], out parsedValues[a])) {
-							isValid = false;
-							break;
-						}
-					}
-					if(isValid) {
-						length = parsedValues[0];
-						decimals = parsedValues[1];
-						smallDec = parsedValues[2];
-					}
-					else if(int.TryParse(parts[0][1..], out parsedValues[0])) {
-						length = parsedValues[0];
-					}
-				}
-			}
-			return ToCustomString(length, decimals, smallDec, DefaultNotation, formatProvider);
+		public readonly string ToString(string? format, IFormatProvider? formatProvider = null) {
+			formatProvider ??= DefaultCulture;
+#if NET5_0_OR_GREATER
+			return string.Format(formatProvider, $"{{0:{format}}}e{{1:{format}}}", Mantissa, Exponent);
+#else
+			return string.Format(formatProvider, $"{{0:{format}{'}'}e{{1:{format}{'}'}", Mantissa, Exponent);
+#endif
 		}
 
 		/// <summary>Makes a custom string representation that makes it easier to make this number stay within a certain length.</summary>
@@ -355,19 +388,19 @@ namespace BreakInfinity {
 		///   number is greater than <see cref="ThresholdMod1Double"/>, it stops displaying the mantissa (A in the previous format description) since it is
 		///   always 1.
 		/// </remarks>
-		public readonly string ToCustomString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider formatProvider = null) {
-			const string NumberFormat = "#,0.###############";
+		public readonly string ToCustomString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider? formatProvider = null) {
 			double eAbs = Math.Abs(Exponent);
 			bool ismsig = eAbs < ThresholdMod1Double, ismn = double.IsNegative(Mantissa);
 			length = Math.Clamp(length - (ismsig ? 1 : 0) - (ismn ? 1 : 0), 2, 15);
 			decimals = Math.Clamp(decimals, 0, 15);
 			smallDec = Math.Clamp(smallDec, 0, 15);
+			formatProvider ??= DefaultCulture;
 			if(!IsFinite()) {
 				return Mantissa.ToString(formatProvider);
 			}
 			if(eAbs <= length) {
 				int ei = (int)Exponent;
-				return Truncate(Mantissa * GetPowerOf10(ei), Math.Clamp(smallDec - ei, 0, Math.Min(length - ei, length))).ToString(NumberFormat, formatProvider);
+				return Truncate(Mantissa * GetPowerOf10(ei), Math.Clamp(smallDec - ei, 0, Math.Min(length - ei, length))).ToString("#,0.################", formatProvider);
 			}
 			length = Math.Max(double.IsNegative(Exponent) ? length - 1 : length, 2);
 			int ee = (int)Math.Log10(eAbs);
@@ -381,17 +414,37 @@ namespace BreakInfinity {
 			if(ee < length - 1 || ee < 3) {
 				switch(notation) {
 					case Notation.Standard when e3 >= 0 && e3 < StandardNotationThreshold:
-						return string.Concat(m3.ToString(NumberFormat, formatProvider), GetStandardName((int)e3));
+#if NET6_0_OR_GREATER
+						return string.Create(formatProvider, $"{m3:#,0.################}{GetStandardName((int)e3)}");
+#else
+						return string.Format(formatProvider, "{0:#,0.################}{1}", m3, GetStandardName((int)e3));
+#endif
 					case Notation.Engineering:
-						return string.Concat(m3.ToString(NumberFormat, formatProvider), "e", e3.ToString(NumberFormat, formatProvider));
+#if NET6_0_OR_GREATER
+						return string.Create(formatProvider, $"{m3:#,0.################}e{e3:#,0.################}");
+#else
+						return string.Format(formatProvider, "{0:#,0.################}e{1:#,0.################}", m3, e3);
+#endif
 					default:
-						return string.Concat(m.ToString(NumberFormat, formatProvider), "e", Exponent.ToString(NumberFormat, formatProvider));
+#if NET6_0_OR_GREATER
+						return string.Create(formatProvider, $"{m:#,0.################}e{Exponent:#,0.################}");
+#else
+						return string.Format(formatProvider, "{0:#,0.################}e{1:#,0.################}", m, Exponent);
+#endif
 				}
 			}
 			if(ismsig) {
-				return string.Concat(m.ToString(NumberFormat, formatProvider), "e", me.ToString(NumberFormat, formatProvider), "e", ee.ToString(NumberFormat, formatProvider));
+#if NET6_0_OR_GREATER
+				return string.Create(formatProvider, $"{m:#,0.################}e{me:#,0.################}e{ee:#,0.################}");
+#else
+				return string.Format(formatProvider, "{0:#,0.################}e{1:#,0.################}e{2:#,0.################}", m, me, ee);
+#endif
 			}
-			return string.Concat(ismn ? "-e" : "e", me.ToString(NumberFormat, formatProvider), "e", ee.ToString(NumberFormat, formatProvider));
+#if NET6_0_OR_GREATER
+			return string.Create(formatProvider, $"{(ismn ? "-" : "")}e{me:#,0.################}e{ee:#,0.################}");
+#else
+			return string.Format(formatProvider, "{0}e{1:#,0.################}e{2:#,0.################}", ismn ? "-" : "", me, ee);
+#endif
 		}
 
 		/// <summary>

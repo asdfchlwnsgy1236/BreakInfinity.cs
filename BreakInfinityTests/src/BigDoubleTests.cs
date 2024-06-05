@@ -63,6 +63,21 @@ namespace BreakInfinityTests {
 			[65, "Vig"],
 			[66, ""]
 		];
+		private static readonly object[][] CasesTryParseStringBigDouble = [
+			["0", BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
+			["-e-1.23e30", -1, -1.23e30, ToleranceLow, ToleranceLow],
+			["1.23e-4.56e9", 1.23, -4.56e9, ToleranceLow, ToleranceLow],
+			["0.1", BigDouble.Tenth.Mantissa, BigDouble.Tenth.Exponent, ToleranceLow, ToleranceLow],
+			["-1", -BigDouble.One.Mantissa, BigDouble.One.Exponent, ToleranceLow, ToleranceLow],
+			["10", BigDouble.Ten.Mantissa, BigDouble.Ten.Exponent, ToleranceLow, ToleranceLow],
+			["-1k", -1, 3, ToleranceLow, ToleranceLow],
+			["256vig", 2.56, 65, ToleranceLow, ToleranceLow],
+			["-1234e12.3", -2.4621536966715974280, 15, ToleranceMedium, ToleranceLow],
+			["e123e123", 1, 1.23e125, ToleranceLow, ToleranceLow],
+			["-Infinity", BigDouble.NegativeInfinity.Mantissa, BigDouble.NegativeInfinity.Exponent, ToleranceLow, ToleranceLow],
+			["Infinity", BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow],
+			["NaN", BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
+		];
 		private static readonly object[][] CasesUnaryBigDoubleStrictSpecialNoNaN = [
 			[BigDouble.Zero, 0.0],
 			[BigDouble.NegativeInfinity, double.NegativeInfinity],
@@ -83,25 +98,28 @@ namespace BreakInfinityTests {
 			.. CasesUnaryBigDoubleSpecialNoNaN,
 			[BigDouble.NaN, double.NaN]
 		];
-		private static readonly object[][] CasesUnaryBigDoubleGeneral = [
-			[new BigDouble(-1.234, -6, false), -1.234e-6],
-			[new BigDouble(1.234, -6, false), 1.234e-6],
+		private static readonly object[][] CasesUnaryBigDoubleGeneralSimple = [
 			[-BigDouble.Tenth, -0.1],
 			[BigDouble.Tenth, 0.1],
 			[-BigDouble.Half, -0.5],
 			[BigDouble.Half, 0.5],
-			[-BigDouble.One, -1.0],
-			[BigDouble.One, 1.0],
-			[-BigDouble.Two, -2.0],
-			[BigDouble.Two, 2.0],
-			[-BigDouble.Ten, -10.0],
-			[BigDouble.Ten, 10.0],
+			[-BigDouble.One, -1],
+			[BigDouble.One, 1],
+			[-BigDouble.Two, -2],
+			[BigDouble.Two, 2],
+			[-BigDouble.Ten, -10],
+			[BigDouble.Ten, 10],
+		];
+		private static readonly object[][] CasesUnaryBigDoubleGeneral = [
+			.. CasesUnaryBigDoubleGeneralSimple,
+			[new BigDouble(-1.234, -6, false), -1.234e-6],
+			[new BigDouble(1.234, -6, false), 1.234e-6],
 			[new BigDouble(-1.234, 6, false), -1.234e6],
 			[new BigDouble(1.234, 6, false), 1.234e6]
 		];
-		private static readonly object[][] CasesUnaryBigDoubleStrictAllNoNaN = [
-			.. CasesUnaryBigDoubleStrictSpecialNoNaN,
-			.. CasesUnaryBigDoubleGeneral
+		private static readonly object[][] CasesUnaryBigDoubleStrictAllSimple = [
+			.. CasesUnaryBigDoubleStrictSpecial,
+			.. CasesUnaryBigDoubleGeneralSimple
 		];
 		private static readonly object[][] CasesUnaryBigDoubleStrictAll = [
 			.. CasesUnaryBigDoubleStrictSpecial,
@@ -115,10 +133,18 @@ namespace BreakInfinityTests {
 			.. CasesUnaryBigDoubleSpecial,
 			.. CasesUnaryBigDoubleGeneral
 		];
+		private static readonly object[][] CasesBinaryBigDoubleAllSimple;
 		private static readonly object[][] CasesBinaryBigDoubleAll;
 
 		static BigDoubleTests() {
-			int count = CasesUnaryBigDoubleStrictAll.Length;
+			int count = CasesUnaryBigDoubleStrictAllSimple.Length;
+			CasesBinaryBigDoubleAllSimple = new object[count * count][];
+			for(int a = 0, index = 0; a < count; ++a) {
+				for(int b = 0; b < count; ++b, ++index) {
+					CasesBinaryBigDoubleAllSimple[index] = [.. CasesUnaryBigDoubleStrictAllSimple[a], .. CasesUnaryBigDoubleStrictAllSimple[b]];
+				}
+			}
+			count = CasesUnaryBigDoubleStrictAll.Length;
 			CasesBinaryBigDoubleAll = new object[count * count][];
 			for(int a = 0, index = 0; a < count; ++a) {
 				for(int b = 0; b < count; ++b, ++index) {
@@ -132,23 +158,23 @@ namespace BreakInfinityTests {
 		private static void AssertEqualDouble(double actual, double expected, long tolerance) => Assert.That(actual, Is.EqualTo(expected).Within(tolerance).Ulps);
 
 		private static void AssertEqualBigDoubleComponents(BigDouble actual, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
-		=> Assert.Multiple(() => {
-			AssertEqualDouble(actual.Mantissa, expectedMantissa, toleranceMantissa);
-			AssertEqualDouble(actual.Exponent, expectedExponent, toleranceExponent);
-		});
+			=> Assert.Multiple(() => {
+				AssertEqualDouble(actual.Mantissa, expectedMantissa, toleranceMantissa);
+				AssertEqualDouble(actual.Exponent, expectedExponent, toleranceExponent);
+			});
 
 		private static void AssertEqualBigDouble(BigDouble actual, BigDouble expected, long toleranceMantissa, long toleranceExponent)
-		=> AssertEqualBigDoubleComponents(actual, expected.Mantissa, expected.Exponent, toleranceMantissa, toleranceExponent);
+			=> AssertEqualBigDoubleComponents(actual, expected.Mantissa, expected.Exponent, toleranceMantissa, toleranceExponent);
 
 		private static void AssertEqualString(string actual, string expected) => Assert.That(actual, Is.EqualTo(expected).IgnoreCase);
 
 		[TestCaseSource(nameof(CasesConstructorDoubleDouble))]
 		public void ConstructorDoubleDouble(double mantissa, double exponent, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
-		=> AssertEqualBigDoubleComponents(new(mantissa, exponent), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
+			=> AssertEqualBigDoubleComponents(new(mantissa, exponent), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 
 		[TestCaseSource(nameof(CasesConstructorDouble))]
 		public void ConstructorDouble(double n, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
-		=> AssertEqualBigDoubleComponents(new(n), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
+			=> AssertEqualBigDoubleComponents(new(n), expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 
 		[TestCaseSource(nameof(CasesGetPowerOf10Int))]
 		public void GetPowerOf10Int(int power, double expected, long tolerance) => AssertEqualDouble(BigDouble.GetPowerOf10(power), expected, tolerance);
@@ -197,5 +223,14 @@ namespace BreakInfinityTests {
 
 		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
 		public void GreaterThanOrEqualOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl >= nr, dl >= dr);
+
+		[TestCaseSource(nameof(CasesTryParseStringBigDouble))]
+		public void TryParseStringBigDouble(string s, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent) {
+			if(!BigDouble.TryParse(s, out BigDouble n)) {
+				Assert.Fail("Parsing failed when it should have succeeded.");
+				return;
+			}
+			AssertEqualBigDoubleComponents(n, expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
+		}
 	}
 }
