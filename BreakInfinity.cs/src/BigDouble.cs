@@ -1,11 +1,11 @@
 // Copyright 2024 Joonhyo Choi (asdfchlwnsgy1236); Apache License Version 2.0.
 
+#nullable enable
+
 namespace BreakInfinity {
 	using System;
 	using System.Collections.Generic;
 	using System.Globalization;
-
-#nullable enable
 
 #if UNITY_2021_2_OR_NEWER
 	[Serializable]
@@ -35,7 +35,9 @@ namespace BreakInfinity {
 	[Serializable]
 #endif
 	public struct BigDouble: IComparable, IComparable<BigDouble>, IEquatable<BigDouble>, IFormattable {
+		private const double DoubleMinMantissa = double.Epsilon * 1e162 * 1e162;
 		private const int DoubleMinExponent = -324;
+		private const double DoubleMaxMantissa = double.MaxValue * 1e-154 * 1e-154;
 		private const int DoubleMaxExponent = 308;
 		private const int DoubleZeroExponentIndex = -DoubleMinExponent - 1;
 		private const int ThresholdMod1Exponent = 15;
@@ -47,7 +49,12 @@ namespace BreakInfinity {
 		private const Notation DefaultNotation = Notation.Scientific;
 
 		private static readonly double[] PowersOf10 = new double[DoubleMaxExponent - DoubleMinExponent];
-		private static readonly string[] StandardNotationNames = { "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vig" };
+		private static readonly string[] StandardNotationNames
+#if NET8_0_OR_GREATER
+			= ["K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vig"];
+#else
+			= { "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vig" };
+#endif
 		private static readonly Dictionary<string, double> StandardNotationExponents;
 		private static readonly double StandardNotationThreshold;
 		private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
@@ -146,6 +153,8 @@ namespace BreakInfinity {
 
 		public static bool IsZero(BigDouble n) => n.IsZero();
 
+		public static bool IsDouble(BigDouble n) => n.IsDouble();
+
 		public static int Sign(BigDouble n) => n.Sign();
 
 		public static bool operator ==(BigDouble l, BigDouble r) => l.Mantissa == r.Mantissa && l.Exponent == r.Exponent;
@@ -214,7 +223,7 @@ namespace BreakInfinity {
 		public static implicit operator BigDouble(double n) => new(n);
 
 		public static explicit operator double(BigDouble n) {
-			if(!n.IsFinite() || n.IsZero() || n.Exponent == 0) {
+			if(!n.IsFinite() || n.Exponent == 0) {
 				return n.Mantissa;
 			}
 			if(n.Exponent > DoubleMaxExponent) {
@@ -316,6 +325,14 @@ namespace BreakInfinity {
 
 		public readonly bool IsZero() => Mantissa == 0;
 
+		public readonly bool IsDouble() {
+			if(!IsFinite() || Exponent > DoubleMinExponent && Exponent < DoubleMaxExponent) {
+				return true;
+			}
+			double mabs = Math.Abs(Mantissa);
+			return Exponent == DoubleMinExponent && mabs >= DoubleMinMantissa || Exponent == DoubleMaxExponent && mabs <= DoubleMaxMantissa;
+		}
+
 		public readonly int Sign() => Math.Sign(Mantissa);
 
 		public readonly int CompareTo(object? obj) {
@@ -353,13 +370,16 @@ namespace BreakInfinity {
 
 		public override readonly string ToString() => ToCustomString();
 
-		public readonly string ToString(IFormatProvider formatProvider) => ToString(null, formatProvider);
+		public readonly string ToString(IFormatProvider? formatProvider) => ToString(null, formatProvider);
 
 		/// <summary>This is the implementation for <see cref="IFormattable"/> for the cases where a simple string representation is sufficient.</summary>
 		/// <param name="format">The format string to apply to each number component.</param>
 		/// <param name="formatProvider">The format provider to apply to each number component.</param>
 		public readonly string ToString(string? format, IFormatProvider? formatProvider = null) {
 			formatProvider ??= DefaultCulture;
+			if(IsDouble()) {
+				return ((double)this).ToString(format, formatProvider);
+			}
 #if NET5_0_OR_GREATER
 			return string.Format(formatProvider, $"{{0:{format}}}e{{1:{format}}}", Mantissa, Exponent);
 #else
@@ -389,8 +409,8 @@ namespace BreakInfinity {
 		///   always 1.
 		/// </remarks>
 		public readonly string ToCustomString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider? formatProvider = null) {
-			double eAbs = Math.Abs(Exponent);
-			bool ismsig = eAbs < ThresholdMod1Double, ismn = double.IsNegative(Mantissa);
+			double eabs = Math.Abs(Exponent);
+			bool ismsig = eabs < ThresholdMod1Double, ismn = double.IsNegative(Mantissa);
 			length = Math.Clamp(length - (ismsig ? 1 : 0) - (ismn ? 1 : 0), 2, 15);
 			decimals = Math.Clamp(decimals, 0, 15);
 			smallDec = Math.Clamp(smallDec, 0, 15);
@@ -398,12 +418,12 @@ namespace BreakInfinity {
 			if(!IsFinite()) {
 				return Mantissa.ToString(formatProvider);
 			}
-			if(eAbs <= length) {
+			if(eabs <= length) {
 				int ei = (int)Exponent;
 				return Truncate(Mantissa * GetPowerOf10(ei), Math.Clamp(smallDec - ei, 0, Math.Min(length - ei, length))).ToString("#,0.################", formatProvider);
 			}
 			length = Math.Max(double.IsNegative(Exponent) ? length - 1 : length, 2);
-			int ee = (int)Math.Log10(eAbs);
+			int ee = (int)Math.Log10(eabs);
 			double m = Truncate(Mantissa, Math.Max(Math.Min(decimals, length - 2 - ee), 0));
 			double me = Truncate(Exponent / GetPowerOf10(ee), Math.Max(Math.Min(decimals, length - 4 - (int)Math.Log10(ee)), 0));
 			double offset = Exponent % 3;
@@ -457,9 +477,9 @@ namespace BreakInfinity {
 		/// </summary>
 		/// <remarks>In the case of any non-finite values (NaN and positive/negative infinity), this sets the number to the corresponding preset.</remarks>
 		public void NormalizeMod() {
-			double mAbs = Math.Abs(Mantissa), eAbs = Math.Abs(Exponent), ef = Exponent % 1;
-			bool ismsig = eAbs < ThresholdMod1Double, isNormalLow = mAbs >= 1 && mAbs < 10 && ef == 0;
-			if(ismsig && isNormalLow || !ismsig && mAbs == 1) {
+			double mabs = Math.Abs(Mantissa), ef = Exponent % 1;
+			bool ismsig = Math.Abs(Exponent) < ThresholdMod1Double, isNormalLow = mabs >= 1 && mabs < 10 && ef == 0;
+			if(ismsig && isNormalLow || !ismsig && mabs == 1) {
 				return;
 			}
 			if(double.IsNaN(Mantissa) || double.IsNaN(Exponent)) {
@@ -480,7 +500,7 @@ namespace BreakInfinity {
 				return;
 			}
 			if(!isNormalLow) {
-				int eo = (int)Math.Floor(Math.Log10(mAbs) + ef);
+				int eo = (int)Math.Floor(Math.Log10(mabs) + ef);
 				Exponent = Math.Truncate(Exponent + eo);
 				ismsig = Math.Abs(Exponent) < ThresholdMod1Double;
 				if(ismsig) {

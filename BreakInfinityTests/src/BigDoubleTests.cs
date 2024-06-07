@@ -63,6 +63,21 @@ namespace BreakInfinityTests {
 			[65, "Vig"],
 			[66, ""]
 		];
+		private static readonly object[][] CasesIsDoubleBigDouble = [
+			[BigDouble.Zero, true],
+			[BigDouble.Epsilon, false],
+			[new BigDouble(double.Epsilon), true],
+			[BigDouble.Half, true],
+			[BigDouble.One, true],
+			[BigDouble.Two, true],
+			[new BigDouble(double.MinValue), true],
+			[new BigDouble(double.MaxValue), true],
+			[BigDouble.MinValue, false],
+			[BigDouble.MaxValue, false],
+			[BigDouble.NegativeInfinity, true],
+			[BigDouble.PositiveInfinity, true],
+			[BigDouble.NaN, true]
+		];
 		private static readonly object[][] CasesTryParseStringBigDouble = [
 			["0", BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			["-e-1.23e30", -1, -1.23e30, ToleranceLow, ToleranceLow],
@@ -203,6 +218,9 @@ namespace BreakInfinityTests {
 		[TestCaseSource(nameof(CasesUnaryBigDoubleAll))]
 		public void IsZeroBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.IsZero(n), d == 0);
 
+		[TestCaseSource(nameof(CasesIsDoubleBigDouble))]
+		public void IsDoubleBigDouble(BigDouble n, bool expected) => AssertEqualSimple(BigDouble.IsDouble(n), expected);
+
 		[TestCaseSource(nameof(CasesUnaryBigDoubleAllNoNaN))]
 		public void SignBigDouble(BigDouble n, double d) => AssertEqualSimple(BigDouble.Sign(n), Math.Sign(d));
 
@@ -232,5 +250,8 @@ namespace BreakInfinityTests {
 			}
 			AssertEqualBigDoubleComponents(n, expectedMantissa, expectedExponent, toleranceMantissa, toleranceExponent);
 		}
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void CastToDouble(BigDouble n, double d) => AssertEqualDouble((double)n, d, ToleranceLow);
 	}
 }
