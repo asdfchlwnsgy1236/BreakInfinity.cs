@@ -170,15 +170,15 @@ namespace BreakInfinityTests {
 
 		private static void AssertEqualSimple<T>(T actual, T expected) => Assert.That(actual, Is.EqualTo(expected));
 
-		private static void AssertEqualDouble(double actual, double expected, long tolerance) => Assert.That(actual, Is.EqualTo(expected).Within(tolerance).Ulps);
+		private static void AssertEqualDouble(double actual, double expected, long tolerance = ToleranceLow) => Assert.That(actual, Is.EqualTo(expected).Within(tolerance).Ulps);
 
-		private static void AssertEqualBigDoubleComponents(BigDouble actual, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent)
+		private static void AssertEqualBigDoubleComponents(BigDouble actual, double expectedMantissa, double expectedExponent, long toleranceMantissa = ToleranceLow, long toleranceExponent = ToleranceLow)
 			=> Assert.Multiple(() => {
 				AssertEqualDouble(actual.Mantissa, expectedMantissa, toleranceMantissa);
 				AssertEqualDouble(actual.Exponent, expectedExponent, toleranceExponent);
 			});
 
-		private static void AssertEqualBigDouble(BigDouble actual, BigDouble expected, long toleranceMantissa, long toleranceExponent)
+		private static void AssertEqualBigDouble(BigDouble actual, BigDouble expected, long toleranceMantissa = ToleranceLow, long toleranceExponent = ToleranceLow)
 			=> AssertEqualBigDoubleComponents(actual, expected.Mantissa, expected.Exponent, toleranceMantissa, toleranceExponent);
 
 		private static void AssertEqualString(string actual, string expected) => Assert.That(actual, Is.EqualTo(expected).IgnoreCase);
@@ -243,7 +243,7 @@ namespace BreakInfinityTests {
 		public void GreaterThanOrEqualOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl >= nr, dl >= dr);
 
 		[TestCaseSource(nameof(CasesTryParseStringBigDouble))]
-		public void TryParseStringBigDouble(string s, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent) {
+		public void TryParseStringToBigDouble(string s, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent) {
 			if(!BigDouble.TryParse(s, out BigDouble n)) {
 				Assert.Fail("Parsing failed when it should have succeeded.");
 				return;
@@ -252,6 +252,30 @@ namespace BreakInfinityTests {
 		}
 
 		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
-		public void CastToDouble(BigDouble n, double d) => AssertEqualDouble((double)n, d, ToleranceLow);
+		public void CastBigDoubleToDouble(BigDouble n, double d) => AssertEqualDouble((double)n, d);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void UnaryPlusOperatorBigDouble(BigDouble n, double d) => AssertEqualBigDouble(+n, +d);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void UnaryMinusOperatorBigDouble(BigDouble n, double d) => AssertEqualBigDouble(-n, -d);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void IncrementOperatorBigDouble(BigDouble n, double d) => AssertEqualBigDouble(++n, ++d);
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void BinaryPlusOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualBigDouble(nl + nr, dl + dr);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void DecrementOperatorBigDouble(BigDouble n, double d) => AssertEqualBigDouble(--n, --d);
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void BinaryMinusOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualBigDouble(nl - nr, dl - dr);
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void MultiplicationBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualBigDouble(nl * nr, dl * dr);
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void DivisionBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualBigDouble(nl / nr, dl / dr);
 	}
 }
