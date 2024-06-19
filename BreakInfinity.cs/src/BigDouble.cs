@@ -40,9 +40,9 @@ namespace BreakInfinity {
 		private const double DoubleMaxMantissa = double.MaxValue * 1e-154 * 1e-154;
 		private const int DoubleMaxExponent = 308;
 		private const int DoubleZeroExponentIndex = -DoubleMinExponent - 1;
-		private const int ThresholdMod1Exponent = 15;
-		private const int ThresholdAdd10Exponent = 17;
-		private const double ThresholdMod1Double = 4503599627370496;
+		private const int ThresholdMod1Exponent = 16;
+		private const int ThresholdAdd10Exponent = 18;
+		private const double ThresholdMod1Double = 1L << 52;
 		private const int DefaultLength = 9;
 		private const int DefaultDecimals = 6;
 		private const int DefaultSmallDec = 6;
@@ -58,22 +58,23 @@ namespace BreakInfinity {
 		private static readonly Dictionary<string, double> StandardNotationExponents;
 		private static readonly double StandardNotationThreshold;
 		private static readonly CultureInfo DefaultCulture = CultureInfo.InvariantCulture;
-		private static readonly BigDouble Ln10 = new(2.3025850929940456840, 0, false);
 
-		public static readonly BigDouble Zero = new(0, 0, false);
+		public static readonly BigDouble Zero = new(0, false);
 		public static readonly BigDouble Tenth = new(1, -1, false);
 		public static readonly BigDouble Half = new(5, -1, false);
-		public static readonly BigDouble One = new(1, 0, false);
-		public static readonly BigDouble Two = new(2, 0, false);
-		public static readonly BigDouble E = new(Math.E, 0, false);
-		public static readonly BigDouble Pi = new(Math.PI, 0, false);
+		public static readonly BigDouble One = new(1, false);
+		public static readonly BigDouble Two = new(2, false);
+		public static readonly BigDouble LnOf10 = new(2.3025850929940456840, false);
+		public static readonly BigDouble E = new(Math.E, false);
+		public static readonly BigDouble Pi = new(Math.PI, false);
+		public static readonly BigDouble Log2Of10 = new(3.3219280948873623478, false);
 		public static readonly BigDouble Ten = new(1, 1, false);
 		public static readonly BigDouble MinValue = new(-1, double.MaxValue, false);
 		public static readonly BigDouble MaxValue = new(1, double.MaxValue, false);
 		public static readonly BigDouble Epsilon = new(1, double.MinValue, false);
-		public static readonly BigDouble NaN = new(double.NaN, 0, false);
-		public static readonly BigDouble NegativeInfinity = new(double.NegativeInfinity, 0, false);
-		public static readonly BigDouble PositiveInfinity = new(double.PositiveInfinity, 0, false);
+		public static readonly BigDouble NaN = new(double.NaN, false);
+		public static readonly BigDouble NegativeInfinity = new(double.NegativeInfinity, false);
+		public static readonly BigDouble PositiveInfinity = new(double.PositiveInfinity, false);
 
 		public double Mantissa;
 		public double Exponent;
@@ -97,10 +98,12 @@ namespace BreakInfinity {
 			}
 		}
 
-		public BigDouble(double n) {
+		public BigDouble(double n, bool needsNormalization = true) {
 			Mantissa = n;
 			Exponent = 0;
-			NormalizeMod();
+			if(needsNormalization) {
+				NormalizeMod();
+			}
 		}
 
 		private static double Truncate(double n, int digits) {
@@ -268,30 +271,29 @@ namespace BreakInfinity {
 
 		public static BigDouble Ln(BigDouble n) => n.Ln();
 
+		public static BigDouble Log2(BigDouble n) => n.Log2();
+
 		public static BigDouble Log(BigDouble n, double b) => n.Log(b);
 
-		public static double Log(BigDouble n, BigDouble b) => n.Log(b);
+		public static BigDouble Log(BigDouble n, BigDouble b) => n.Log(b);
 
 		public static BigDouble Exp10(double n) => n % 1 == 0 ? new(1, n, false) : new(1, n);
 
 		public static BigDouble Pow(BigDouble b, double p) => b.Pow(p);
 
-		public static BigDouble Exp(double p) => Math.Abs(p) <= 708 ? (BigDouble)Math.Exp(p) : E.Pow(p);
+		public static BigDouble Exp(double p) => Math.Abs(p) <= 708 ? Math.Exp(p) : E.Pow(p);
 
 		public static BigDouble Sinh(double n) => (Exp(n) - Exp(-n)) * Half;
 
 		public static BigDouble Cosh(double n) => (Exp(n) + Exp(-n)) * Half;
 
-		public static BigDouble Tanh(double n) {
-			BigDouble epx = Exp(n), enx = Exp(-n);
-			return (epx - enx) / (epx + enx);
-		}
+		public static BigDouble Tanh(double n) => Math.Tanh(n);
 
-		public static BigDouble Asinh(BigDouble n) => Ln(n + Sqrt(Square(n) + One));
+		public static BigDouble Asinh(BigDouble n) => n.IsFinite() ? Ln(Sqrt(Square(n) + One) + n) : Math.Asinh((double)n);
 
-		public static BigDouble Acosh(BigDouble n) => Ln(n + Sqrt(Square(n) - One));
+		public static BigDouble Acosh(BigDouble n) => Ln(Sqrt(Square(n) - One) + n);
 
-		public static BigDouble Atanh(BigDouble n) => Ln((One + n) / (One - n)) * Half;
+		public static BigDouble Atanh(double n) => Math.Atanh(n);
 
 		public static BigDouble Truncate(BigDouble n, int digits = 0) => n.Truncate(digits);
 
@@ -348,7 +350,7 @@ namespace BreakInfinity {
 		public readonly int CompareTo(BigDouble other) {
 			int ecmp = Exponent.CompareTo(other.Exponent);
 			bool isNegative = IsNegative();
-			return !IsFinite() || !other.IsFinite() || IsZero() || other.IsZero() || ecmp == 0 || isNegative != other.IsNegative() ? Mantissa.CompareTo(other.Mantissa) : isNegative ? -ecmp : ecmp;
+			return !IsFinite() || !IsFinite(other) || IsZero() || IsZero(other) || ecmp == 0 || isNegative != IsNegative(other) ? Mantissa.CompareTo(other.Mantissa) : isNegative ? -ecmp : ecmp;
 		}
 
 		public override readonly bool Equals(object? obj) => obj is BigDouble n && Equals(n);
@@ -478,7 +480,7 @@ namespace BreakInfinity {
 		/// <remarks>In the case of any non-finite values (NaN and positive/negative infinity), this sets the number to the corresponding preset.</remarks>
 		public void NormalizeMod() {
 			double mabs = Math.Abs(Mantissa), ef = Exponent % 1;
-			bool ismsig = Math.Abs(Exponent) < ThresholdMod1Double, isNormalLow = mabs >= 1 && mabs < 10 && ef == 0;
+			bool ismsig = Math.Abs(Exponent) < ThresholdMod1Double || !double.IsFinite(Exponent), isNormalLow = mabs >= 1 && mabs < 10 && ef == 0;
 			if(ismsig && isNormalLow || !ismsig && mabs == 1) {
 				return;
 			}
@@ -517,18 +519,22 @@ namespace BreakInfinity {
 
 		public void NegateMod() => Mantissa = -Mantissa;
 
-		public readonly BigDouble Negate() => new(-Mantissa, Exponent, false);
+		public readonly BigDouble Negate() {
+			BigDouble n = this;
+			n.NegateMod();
+			return n;
+		}
 
 		public void AddMod(BigDouble other) {
 			double diff = Math.Round(Exponent - other.Exponent);
-			if(diff > ThresholdAdd10Exponent) {
+			if(diff >= ThresholdAdd10Exponent) {
 				return;
 			}
-			if(diff < -ThresholdAdd10Exponent) {
+			if(diff <= -ThresholdAdd10Exponent) {
 				this = other;
 				return;
 			}
-			if(!IsFinite() || !other.IsFinite()) {
+			if(!IsFinite() || !IsFinite(other)) {
 				Mantissa += other.Mantissa;
 				Exponent = 0;
 				return;
@@ -553,10 +559,18 @@ namespace BreakInfinity {
 			BigDouble original = this;
 			AddMod(One);
 			if(this == original) {
+#if NET5_0_OR_GREATER
+				Mantissa = Math.BitIncrement(Mantissa);
+#else
 				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? -1 : 1));
+#endif
 				NormalizeMod();
 				if(Mantissa < original.Mantissa && Exponent == original.Exponent) {
+#if NET5_0_OR_GREATER
+					Exponent = Math.BitIncrement(Exponent);
+#else
 					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) + 1);
+#endif
 					NormalizeMod();
 				}
 			}
@@ -580,10 +594,18 @@ namespace BreakInfinity {
 			BigDouble original = this;
 			SubtractMod(One);
 			if(this == original) {
+#if NET5_0_OR_GREATER
+				Mantissa = Math.BitDecrement(Mantissa);
+#else
 				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? 1 : -1));
+#endif
 				NormalizeMod();
 				if(Mantissa > original.Mantissa && Exponent == original.Exponent) {
+#if NET5_0_OR_GREATER
+					Exponent = Math.BitDecrement(Exponent);
+#else
 					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) - 1);
+#endif
 					NormalizeMod();
 				}
 			}
@@ -690,32 +712,45 @@ namespace BreakInfinity {
 		/// <summary>Returns the log base 10 of this number as a <see cref="double"/> since all possible return values can be represented with it.</summary>
 		public readonly double Log10() => Math.Log10(Mantissa) + Exponent;
 
-		public readonly BigDouble Ln() => Math.Log(Mantissa) + (BigDouble)Exponent * Ln10;
+		public readonly BigDouble Ln() => Math.Log(Mantissa) + Exponent * LnOf10;
 
-		public readonly BigDouble Log(double b) => Math.Log(Mantissa, b) + (BigDouble)Exponent * Math.Log(10, b);
+		public readonly BigDouble Log2() {
+#if NET5_0_OR_GREATER
+			return Math.Log2(Mantissa) + Exponent * Log2Of10;
+#else
+			return Math.Log(Mantissa, 2) + Exponent * Log2Of10;
+#endif
+		}
 
-		/// <summary>
-		///   This is meant for use with bases that are either greater than <see cref="double.MaxValue"/> or less than <see cref="double.Epsilon"/> in
-		///   magnitude, and returns a <see cref="double"/> with that assumption.
-		/// </summary>
-		public readonly double Log(BigDouble b) => Log10() / Log10(b);
+		public readonly BigDouble Log(double b) {
+			BigDouble ml = Math.Log(Mantissa, b);
+			if(Exponent == 0) {
+				return ml;
+			}
+			return ml + (BigDouble)Exponent * Math.Log(10, b);
+		}
+
+		public readonly BigDouble Log(BigDouble b) {
+			if(IsDouble(b)) {
+				return Log((double)b);
+			}
+			return Log10() / Log10(b);
+		}
 
 		public readonly BigDouble Pow(double power) {
 			double mpow = Math.Pow(Mantissa, power);
-			if(IsZero() || !IsFinite() || !double.IsFinite(power) || mpow != 0 && !double.IsInfinity(mpow)) {
+			if(IsZero() || Exponent == 0 && (Math.Abs(Mantissa) == 1 || !double.IsFinite(power)) || !IsFinite() || power == 0 || double.IsNaN(mpow)) {
+				return new(mpow, false);
+			}
+			if(mpow != 0 && !double.IsInfinity(mpow)) {
 				return new(mpow, Exponent * power);
 			}
-			bool isNegative = IsNegative();
-			double pmod2 = power % 2;
-			if(isNegative && !(pmod2 is 0 or 1)) {
-				return NaN;
-			}
 			BigDouble n = Exp10(Log10(Abs()) * power);
-			return isNegative && pmod2 == 0 ? n : -n;
+			return IsNegative() && power % 2 == 1 ? -n : n;
 		}
 
 		public void TruncateMod(int digits = 0) {
-			if(Exponent > ThresholdMod1Exponent || !IsFinite()) {
+			if(Exponent >= ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
@@ -732,7 +767,7 @@ namespace BreakInfinity {
 		}
 
 		public void FloorMod(int digits = 0) {
-			if(Exponent > ThresholdMod1Exponent || !IsFinite()) {
+			if(Exponent >= ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
@@ -750,7 +785,7 @@ namespace BreakInfinity {
 		}
 
 		public void CeilingMod(int digits = 0) {
-			if(Exponent > ThresholdMod1Exponent || !IsFinite()) {
+			if(Exponent >= ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits) {
@@ -768,7 +803,7 @@ namespace BreakInfinity {
 		}
 
 		public void RoundMod(int digits = 0, MidpointRounding mode = default) {
-			if(Exponent > ThresholdMod1Exponent || !IsFinite()) {
+			if(Exponent >= ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
 			if(Exponent < -digits - 1) {

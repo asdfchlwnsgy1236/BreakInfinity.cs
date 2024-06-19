@@ -2,6 +2,8 @@
 namespace BreakInfinityTests {
 	using BreakInfinity;
 
+	// TODO: Remember to add a few separate tests for the cases beyond double.
+
 	[TestFixture]
 	public class BigDoubleTests {
 		private const double Epsilon = double.Epsilon;
@@ -94,7 +96,7 @@ namespace BreakInfinityTests {
 			["NaN", BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
 		];
 		private static readonly object[][] CasesUnaryBigDoubleStrictSpecialNoNaN = [
-			[BigDouble.Zero, 0.0],
+			[BigDouble.Zero, 0],
 			[BigDouble.NegativeInfinity, double.NegativeInfinity],
 			[BigDouble.PositiveInfinity, double.PositiveInfinity]
 		];
@@ -178,8 +180,14 @@ namespace BreakInfinityTests {
 				AssertEqualDouble(actual.Exponent, expectedExponent, toleranceExponent);
 			});
 
-		private static void AssertEqualBigDouble(BigDouble actual, BigDouble expected, long toleranceMantissa = ToleranceLow, long toleranceExponent = ToleranceLow)
-			=> AssertEqualBigDoubleComponents(actual, expected.Mantissa, expected.Exponent, toleranceMantissa, toleranceExponent);
+		private static void AssertEqualBigDouble(BigDouble actual, BigDouble expected, long tolerance = ToleranceLow) {
+			if(actual.IsDouble() && expected.IsDouble()) {
+				AssertEqualDouble((double)actual, (double)expected, tolerance);
+			}
+			else {
+				Assert.Fail($"At least one of the numbers is beyond double (actual: {actual.ToDebugString()}, expected: {expected.ToDebugString()}); might want to implement this properly.");
+			}
+		}
 
 		private static void AssertEqualString(string actual, string expected) => Assert.That(actual, Is.EqualTo(expected).IgnoreCase);
 
@@ -277,5 +285,65 @@ namespace BreakInfinityTests {
 
 		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
 		public void DivisionBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualBigDouble(nl / nr, dl / dr);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void ReciprocalBigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Reciprocal(n), 1 / d);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void AbsBigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Abs(n), Math.Abs(d));
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void SqrtBigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Sqrt(n), Math.Sqrt(d));
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void CbrtBigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Cbrt(n), Math.Cbrt(d));
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void SquareBigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Square(n), d * d);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void CubeBigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Cube(n), d * d * d);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void Log10BigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Log10(n), Math.Log10(d));
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void LnBigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Ln(n), Math.Log(d));
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAll))]
+		public void Log2BigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Log2(n), Math.Log2(d));
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void LogBigDoubleDouble(BigDouble nl, double dl, BigDouble _, double dr) => AssertEqualBigDouble(BigDouble.Log(nl, dr), Math.Log(dl, dr), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void LogBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualBigDouble(BigDouble.Log(nl, nr), Math.Log(dl, dr), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAllSimple))]
+		public void Exp10Double(BigDouble _, double d) => AssertEqualBigDouble(BigDouble.Exp10(d), Math.Pow(10, d), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAllSimple))]
+		public void PowBigDoubleDouble(BigDouble nl, double dl, BigDouble _, double dr) => AssertEqualBigDouble(BigDouble.Pow(nl, dr), Math.Pow(dl, dr), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAllSimple))]
+		public void ExpDouble(BigDouble _, double d) => AssertEqualBigDouble(BigDouble.Exp(d), Math.Exp(d), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAllSimple))]
+		public void SinhDouble(BigDouble _, double d) => AssertEqualBigDouble(BigDouble.Sinh(d), Math.Sinh(d), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAllSimple))]
+		public void CoshDouble(BigDouble _, double d) => AssertEqualBigDouble(BigDouble.Cosh(d), Math.Cosh(d), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAllSimple))]
+		public void TanhDouble(BigDouble _, double d) => AssertEqualBigDouble(BigDouble.Tanh(d), Math.Tanh(d), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAllSimple))]
+		public void AsinhBigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Asinh(n), Math.Asinh(d), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAllSimple))]
+		public void AcoshBigDouble(BigDouble n, double d) => AssertEqualBigDouble(BigDouble.Acosh(n), Math.Acosh(d), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAllSimple))]
+		public void AtanhBigDouble(BigDouble _, double d) => AssertEqualBigDouble(BigDouble.Atanh(d), Math.Atanh(d), ToleranceMedium);
 	}
 }
