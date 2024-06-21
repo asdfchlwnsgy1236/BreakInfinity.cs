@@ -255,7 +255,7 @@ namespace BreakInfinity {
 
 		public static BigDouble operator /(BigDouble l, BigDouble r) => l.Divide(r);
 
-		public static BigDouble Reciprocal(BigDouble n) => n.Reciprocate();
+		public static BigDouble Reciprocal(BigDouble n) => n.Reciprocal();
 
 		public static BigDouble Abs(BigDouble n) => n.Abs();
 
@@ -641,15 +641,15 @@ namespace BreakInfinity {
 			return n;
 		}
 
-		public void ReciprocateMod() {
+		public void ReciprocalMod() {
 			Mantissa = 1 / Mantissa;
 			Exponent = -Exponent;
 			NormalizeMod();
 		}
 
-		public readonly BigDouble Reciprocate() {
+		public readonly BigDouble Reciprocal() {
 			BigDouble n = this;
-			n.ReciprocateMod();
+			n.ReciprocalMod();
 			return n;
 		}
 
@@ -753,11 +753,12 @@ namespace BreakInfinity {
 			if(Exponent >= ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
-			if(Exponent < -digits) {
+			double actualDigits = Exponent + digits;
+			if(actualDigits < 0) {
 				this = Zero;
 				return;
 			}
-			Mantissa = Truncate(Mantissa, (int)Exponent + digits);
+			Mantissa = Truncate(Mantissa, (int)actualDigits);
 		}
 
 		public readonly BigDouble Truncate(int digits = 0) {
@@ -770,11 +771,12 @@ namespace BreakInfinity {
 			if(Exponent >= ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
-			if(Exponent < -digits) {
-				this = IsNegative() ? -One : Zero;
+			double actualDigits = Exponent + digits;
+			if(actualDigits < 0) {
+				this = IsNegative() ? -Exp10(-digits) : Zero;
 				return;
 			}
-			Mantissa = Floor(Mantissa, (int)Exponent + digits);
+			Mantissa = Floor(Mantissa, (int)actualDigits);
 			NormalizeMod();
 		}
 
@@ -788,11 +790,12 @@ namespace BreakInfinity {
 			if(Exponent >= ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
-			if(Exponent < -digits) {
-				this = IsNegative() ? Zero : One;
+			double actualDigits = Exponent + digits;
+			if(actualDigits < 0) {
+				this = IsNegative() ? Zero : Exp10(-digits);
 				return;
 			}
-			Mantissa = Ceiling(Mantissa, (int)Exponent + digits);
+			Mantissa = Ceiling(Mantissa, (int)actualDigits);
 			NormalizeMod();
 		}
 
@@ -806,11 +809,12 @@ namespace BreakInfinity {
 			if(Exponent >= ThresholdMod1Exponent || !IsFinite()) {
 				return;
 			}
-			if(Exponent < -digits - 1) {
+			double actualDigits = Exponent + digits;
+			if(actualDigits < -1) {
 				this = Zero;
 				return;
 			}
-			Mantissa = Round(Mantissa, (int)Exponent + digits, mode);
+			Mantissa = Round(Mantissa, (int)actualDigits, mode);
 			NormalizeMod();
 		}
 

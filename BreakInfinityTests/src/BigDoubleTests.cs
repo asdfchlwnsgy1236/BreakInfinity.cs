@@ -15,6 +15,63 @@ namespace BreakInfinityTests {
 		private const long ToleranceLow = 1L << 2;
 		private const long ToleranceMedium = 1L << 16;
 
+		private static readonly object[][] CasesUnaryBigDoubleStrictSpecialNoNaN = [
+			[BigDouble.Zero, 0],
+			[BigDouble.NegativeInfinity, double.NegativeInfinity],
+			[BigDouble.PositiveInfinity, double.PositiveInfinity]
+		];
+		private static readonly object[][] CasesUnaryBigDoubleStrictSpecial = [
+			.. CasesUnaryBigDoubleStrictSpecialNoNaN,
+			[BigDouble.NaN, double.NaN]
+		];
+		private static readonly object[][] CasesUnaryBigDoubleSpecialNoNaN = [
+			.. CasesUnaryBigDoubleStrictSpecialNoNaN,
+			[-BigDouble.Epsilon, -double.Epsilon],
+			[BigDouble.Epsilon, double.Epsilon],
+			[BigDouble.MinValue, double.MinValue],
+			[BigDouble.MaxValue, double.MaxValue]
+		];
+		private static readonly object[][] CasesUnaryBigDoubleSpecial = [
+			.. CasesUnaryBigDoubleSpecialNoNaN,
+			[BigDouble.NaN, double.NaN]
+		];
+		private static readonly object[][] CasesUnaryBigDoubleGeneralSimple = [
+			[-BigDouble.Tenth, -0.1],
+			[BigDouble.Tenth, 0.1],
+			[-BigDouble.Half, -0.5],
+			[BigDouble.Half, 0.5],
+			[-BigDouble.One, -1],
+			[BigDouble.One, 1],
+			[-BigDouble.Two, -2],
+			[BigDouble.Two, 2],
+			[-BigDouble.Ten, -10],
+			[BigDouble.Ten, 10],
+		];
+		private static readonly object[][] CasesUnaryBigDoubleGeneral = [
+			.. CasesUnaryBigDoubleGeneralSimple,
+			[new BigDouble(-1.234, -6, false), -1.234e-6],
+			[new BigDouble(1.234, -6, false), 1.234e-6],
+			[new BigDouble(-1.234, 6, false), -1.234e6],
+			[new BigDouble(1.234, 6, false), 1.234e6]
+		];
+		private static readonly object[][] CasesUnaryBigDoubleStrictAllSimple = [
+			.. CasesUnaryBigDoubleStrictSpecial,
+			.. CasesUnaryBigDoubleGeneralSimple
+		];
+		private static readonly object[][] CasesUnaryBigDoubleStrictAll = [
+			.. CasesUnaryBigDoubleStrictSpecial,
+			.. CasesUnaryBigDoubleGeneral
+		];
+		private static readonly object[][] CasesUnaryBigDoubleAllNoNaN = [
+			.. CasesUnaryBigDoubleSpecialNoNaN,
+			.. CasesUnaryBigDoubleGeneral
+		];
+		private static readonly object[][] CasesUnaryBigDoubleAll = [
+			.. CasesUnaryBigDoubleSpecial,
+			.. CasesUnaryBigDoubleGeneral
+		];
+		private static readonly object[][] CasesBinaryBigDoubleAllSimple;
+		private static readonly object[][] CasesBinaryBigDoubleAll;
 		private static readonly object[][] CasesConstructorDoubleDouble = [
 			[-0.0, -0.0, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			[0, 123, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
@@ -95,63 +152,7 @@ namespace BreakInfinityTests {
 			["Infinity", BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow],
 			["NaN", BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
 		];
-		private static readonly object[][] CasesUnaryBigDoubleStrictSpecialNoNaN = [
-			[BigDouble.Zero, 0],
-			[BigDouble.NegativeInfinity, double.NegativeInfinity],
-			[BigDouble.PositiveInfinity, double.PositiveInfinity]
-		];
-		private static readonly object[][] CasesUnaryBigDoubleStrictSpecial = [
-			.. CasesUnaryBigDoubleStrictSpecialNoNaN,
-			[BigDouble.NaN, double.NaN]
-		];
-		private static readonly object[][] CasesUnaryBigDoubleSpecialNoNaN = [
-			.. CasesUnaryBigDoubleStrictSpecialNoNaN,
-			[-BigDouble.Epsilon, -double.Epsilon],
-			[BigDouble.Epsilon, double.Epsilon],
-			[BigDouble.MinValue, double.MinValue],
-			[BigDouble.MaxValue, double.MaxValue]
-		];
-		private static readonly object[][] CasesUnaryBigDoubleSpecial = [
-			.. CasesUnaryBigDoubleSpecialNoNaN,
-			[BigDouble.NaN, double.NaN]
-		];
-		private static readonly object[][] CasesUnaryBigDoubleGeneralSimple = [
-			[-BigDouble.Tenth, -0.1],
-			[BigDouble.Tenth, 0.1],
-			[-BigDouble.Half, -0.5],
-			[BigDouble.Half, 0.5],
-			[-BigDouble.One, -1],
-			[BigDouble.One, 1],
-			[-BigDouble.Two, -2],
-			[BigDouble.Two, 2],
-			[-BigDouble.Ten, -10],
-			[BigDouble.Ten, 10],
-		];
-		private static readonly object[][] CasesUnaryBigDoubleGeneral = [
-			.. CasesUnaryBigDoubleGeneralSimple,
-			[new BigDouble(-1.234, -6, false), -1.234e-6],
-			[new BigDouble(1.234, -6, false), 1.234e-6],
-			[new BigDouble(-1.234, 6, false), -1.234e6],
-			[new BigDouble(1.234, 6, false), 1.234e6]
-		];
-		private static readonly object[][] CasesUnaryBigDoubleStrictAllSimple = [
-			.. CasesUnaryBigDoubleStrictSpecial,
-			.. CasesUnaryBigDoubleGeneralSimple
-		];
-		private static readonly object[][] CasesUnaryBigDoubleStrictAll = [
-			.. CasesUnaryBigDoubleStrictSpecial,
-			.. CasesUnaryBigDoubleGeneral
-		];
-		private static readonly object[][] CasesUnaryBigDoubleAllNoNaN = [
-			.. CasesUnaryBigDoubleSpecialNoNaN,
-			.. CasesUnaryBigDoubleGeneral
-		];
-		private static readonly object[][] CasesUnaryBigDoubleAll = [
-			.. CasesUnaryBigDoubleSpecial,
-			.. CasesUnaryBigDoubleGeneral
-		];
-		private static readonly object[][] CasesBinaryBigDoubleAllSimple;
-		private static readonly object[][] CasesBinaryBigDoubleAll;
+		private static readonly object[][] CasesRoundingBigDouble;
 
 		static BigDoubleTests() {
 			int count = CasesUnaryBigDoubleStrictAllSimple.Length;
@@ -166,6 +167,16 @@ namespace BreakInfinityTests {
 			for(int a = 0, index = 0; a < count; ++a) {
 				for(int b = 0; b < count; ++b, ++index) {
 					CasesBinaryBigDoubleAll[index] = [.. CasesUnaryBigDoubleStrictAll[a], .. CasesUnaryBigDoubleStrictAll[b]];
+				}
+			}
+			BigDouble[] roundingBigDoubles = [new(-2.2222222222222222222, false), new(2.2222222222222222222, false), new(-5.5555555555555555555, false),
+				new(5.5555555555555555555, false), new(-8.8888888888888888888, false), new(8.8888888888888888888, false)];
+			double[] roundingDoubles = [-2.2222222222222222222, 2.2222222222222222222, -5.5555555555555555555, 5.5555555555555555555, -8.8888888888888888888, 8.8888888888888888888];
+			int[] roundingDigits = Enumerable.Range(-3, 24).ToArray();
+			CasesRoundingBigDouble = new object[roundingBigDoubles.Length * roundingDigits.Length][];
+			for(int a = 0, index = 0; a < roundingBigDoubles.Length; ++a) {
+				for(int b = 0; b < roundingDigits.Length; ++b, ++index) {
+					CasesRoundingBigDouble[index] = [roundingBigDoubles[a], roundingDoubles[a], roundingDigits[b]];
 				}
 			}
 		}
@@ -345,5 +356,29 @@ namespace BreakInfinityTests {
 
 		[TestCaseSource(nameof(CasesUnaryBigDoubleStrictAllSimple))]
 		public void AtanhBigDouble(BigDouble _, double d) => AssertEqualBigDouble(BigDouble.Atanh(d), Math.Atanh(d), ToleranceMedium);
+
+		[TestCaseSource(nameof(CasesRoundingBigDouble))]
+		public void TruncateBigDoubleInt(BigDouble n, double d, int digits) {
+			double offset = Math.Pow(10, digits);
+			AssertEqualBigDouble(BigDouble.Truncate(n, digits), Math.Truncate(d * offset) / offset);
+		}
+
+		[TestCaseSource(nameof(CasesRoundingBigDouble))]
+		public void FloorBigDoubleInt(BigDouble n, double d, int digits) {
+			double offset = Math.Pow(10, digits);
+			AssertEqualBigDouble(BigDouble.Floor(n, digits), Math.Floor(d * offset) / offset);
+		}
+
+		[TestCaseSource(nameof(CasesRoundingBigDouble))]
+		public void CeilingBigDoubleInt(BigDouble n, double d, int digits) {
+			double offset = Math.Pow(10, digits);
+			AssertEqualBigDouble(BigDouble.Ceiling(n, digits), Math.Ceiling(d * offset) / offset);
+		}
+
+		[TestCaseSource(nameof(CasesRoundingBigDouble))]
+		public void RoundBigDoubleInt(BigDouble n, double d, int digits) {
+			double offset = Math.Pow(10, digits);
+			AssertEqualBigDouble(BigDouble.Round(n, digits), Math.Round(d * offset) / offset);
+		}
 	}
 }
