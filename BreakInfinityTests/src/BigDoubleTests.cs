@@ -153,6 +153,14 @@ namespace BreakInfinityTests {
 			["NaN", BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
 		];
 		private static readonly object[][] CasesRoundingBigDouble;
+		private static readonly object[][] CasesClampBigDoubleBigDoubleBigDouble = [
+			[-BigDouble.Two, -2, -BigDouble.One, -1, BigDouble.One, 1],
+			[BigDouble.Zero, 0, -BigDouble.One, -1, BigDouble.One, 1],
+			[BigDouble.Two, 2, -BigDouble.One, -1, BigDouble.One, 1],
+			[BigDouble.NegativeInfinity, double.NegativeInfinity, -BigDouble.One, -1, BigDouble.One, 1],
+			[BigDouble.PositiveInfinity, double.PositiveInfinity, -BigDouble.One, -1, BigDouble.One, 1],
+			[BigDouble.NaN, double.NaN, -BigDouble.One, -1, BigDouble.One, 1]
+		];
 
 		static BigDoubleTests() {
 			int count = CasesUnaryBigDoubleStrictAllSimple.Length;
@@ -380,5 +388,14 @@ namespace BreakInfinityTests {
 			double offset = Math.Pow(10, digits);
 			AssertEqualBigDouble(BigDouble.Round(n, digits), Math.Round(d * offset) / offset);
 		}
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void MinBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualBigDouble(BigDouble.Min(nl, nr), Math.Min(dl, dr));
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void MaxBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualBigDouble(BigDouble.Max(nl, nr), Math.Max(dl, dr));
+
+		[TestCaseSource(nameof(CasesClampBigDoubleBigDoubleBigDouble))]
+		public void ClampBigDoubleBigDoubleBigDouble(BigDouble n, double d, BigDouble nmin, double dmin, BigDouble nmax, double dmax) => AssertEqualBigDouble(BigDouble.Clamp(n, nmin, nmax), Math.Clamp(d, dmin, dmax));
 	}
 }
