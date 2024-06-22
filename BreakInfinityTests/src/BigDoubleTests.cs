@@ -397,5 +397,17 @@ namespace BreakInfinityTests {
 
 		[TestCaseSource(nameof(CasesClampBigDoubleBigDoubleBigDouble))]
 		public void ClampBigDoubleBigDoubleBigDouble(BigDouble n, double d, BigDouble nmin, double dmin, BigDouble nmax, double dmax) => AssertEqualBigDouble(BigDouble.Clamp(n, nmin, nmax), Math.Clamp(d, dmin, dmax));
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void CompareToBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl.CompareTo(nr), dl.CompareTo(dr));
+
+		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
+		public void EqualsBigDoubleGetHashCode(BigDouble nl, double dl, BigDouble nr, double dr) => Assert.Multiple(() => {
+			bool isEqual = nl.Equals(nr);
+			AssertEqualSimple(isEqual, dl.Equals(dr));
+			if(isEqual) {
+				AssertEqualSimple(nl.GetHashCode(), nr.GetHashCode());
+			}
+		});
 	}
 }
