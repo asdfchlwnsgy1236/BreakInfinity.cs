@@ -422,7 +422,7 @@ namespace BreakInfinity {
 			}
 			if(eabs <= length) {
 				int ei = (int)Exponent;
-				return Truncate(Mantissa * GetPowerOf10(ei), Math.Clamp(smallDec - ei, 0, Math.Min(length - ei, length))).ToString("#,0.################", formatProvider);
+				return Truncate(Mantissa * GetPowerOf10(ei), Math.Clamp(smallDec - ei, 0, Math.Min(length - ei, length))).ToString("#,0.###############", formatProvider);
 			}
 			length = Math.Max(double.IsNegative(Exponent) ? length - 1 : length, 2);
 			int ee = (int)Math.Log10(eabs);
@@ -437,35 +437,35 @@ namespace BreakInfinity {
 				switch(notation) {
 					case Notation.Standard when e3 >= 0 && e3 < StandardNotationThreshold:
 #if NET6_0_OR_GREATER
-						return string.Create(formatProvider, $"{m3:#,0.################}{GetStandardName((int)e3)}");
+						return string.Create(formatProvider, $"{m3:#,0.###############}{GetStandardName((int)e3)}");
 #else
-						return string.Format(formatProvider, "{0:#,0.################}{1}", m3, GetStandardName((int)e3));
+						return string.Format(formatProvider, "{0:#,0.###############}{1}", m3, GetStandardName((int)e3));
 #endif
 					case Notation.Engineering:
 #if NET6_0_OR_GREATER
-						return string.Create(formatProvider, $"{m3:#,0.################}e{e3:#,0.################}");
+						return string.Create(formatProvider, $"{m3:#,0.###############}e{e3:#,0.###############}");
 #else
-						return string.Format(formatProvider, "{0:#,0.################}e{1:#,0.################}", m3, e3);
+						return string.Format(formatProvider, "{0:#,0.###############}e{1:#,0.###############}", m3, e3);
 #endif
 					default:
 #if NET6_0_OR_GREATER
-						return string.Create(formatProvider, $"{m:#,0.################}e{Exponent:#,0.################}");
+						return string.Create(formatProvider, $"{m:#,0.###############}e{Exponent:#,0.###############}");
 #else
-						return string.Format(formatProvider, "{0:#,0.################}e{1:#,0.################}", m, Exponent);
+						return string.Format(formatProvider, "{0:#,0.###############}e{1:#,0.###############}", m, Exponent);
 #endif
 				}
 			}
 			if(ismsig) {
 #if NET6_0_OR_GREATER
-				return string.Create(formatProvider, $"{m:#,0.################}e{me:#,0.################}e{ee:#,0.################}");
+				return string.Create(formatProvider, $"{m:#,0.###############}e{me:#,0.###############}e{ee:#,0.###############}");
 #else
-				return string.Format(formatProvider, "{0:#,0.################}e{1:#,0.################}e{2:#,0.################}", m, me, ee);
+				return string.Format(formatProvider, "{0:#,0.###############}e{1:#,0.###############}e{2:#,0.###############}", m, me, ee);
 #endif
 			}
 #if NET6_0_OR_GREATER
-			return string.Create(formatProvider, $"{(ismn ? "-" : "")}e{me:#,0.################}e{ee:#,0.################}");
+			return string.Create(formatProvider, $"{(ismn ? "-" : "")}e{me:#,0.###############}e{ee:#,0.###############}");
 #else
-			return string.Format(formatProvider, "{0}e{1:#,0.################}e{2:#,0.################}", ismn ? "-" : "", me, ee);
+			return string.Format(formatProvider, "{0}e{1:#,0.###############}e{2:#,0.###############}", ismn ? "-" : "", me, ee);
 #endif
 		}
 
