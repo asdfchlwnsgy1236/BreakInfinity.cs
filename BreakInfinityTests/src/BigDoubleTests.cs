@@ -8,12 +8,6 @@ namespace BreakInfinityTests {
 
 	[TestFixture]
 	public class BigDoubleTests {
-		private const double Epsilon = double.Epsilon;
-		private const double MinValue = double.MinValue;
-		private const double MaxValue = double.MaxValue;
-		private const double NegativeInfinity = double.NegativeInfinity;
-		private const double PositiveInfinity = double.PositiveInfinity;
-		private const double NaN = double.NaN;
 		private const long ToleranceLow = 1L << 2;
 		private const long ToleranceMedium = 1L << 16;
 
@@ -85,30 +79,30 @@ namespace BreakInfinityTests {
 			[12.3, 123456.7, 6.1646029736154491055, 123457, ToleranceMedium, ToleranceLow],
 			[-1.1e30, 1.1e30, -1, 1.1e30, ToleranceLow, ToleranceLow],
 			[1.1e30, 1.1e30, 1, 1.1e30, ToleranceLow, ToleranceLow],
-			[0, NegativeInfinity, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
-			[0, PositiveInfinity, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
-			[NegativeInfinity, NegativeInfinity, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
-			[NegativeInfinity, PositiveInfinity, BigDouble.NegativeInfinity.Mantissa, BigDouble.NegativeInfinity.Exponent, ToleranceLow, ToleranceLow],
-			[PositiveInfinity, NegativeInfinity, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
-			[PositiveInfinity, PositiveInfinity, BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow],
-			[0, NaN, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
+			[0, double.NegativeInfinity, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
+			[0, double.PositiveInfinity, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
+			[double.NegativeInfinity, double.NegativeInfinity, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
+			[double.NegativeInfinity, double.PositiveInfinity, BigDouble.NegativeInfinity.Mantissa, BigDouble.NegativeInfinity.Exponent, ToleranceLow, ToleranceLow],
+			[double.PositiveInfinity, double.NegativeInfinity, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow],
+			[double.PositiveInfinity, double.PositiveInfinity, BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow],
+			[0, double.NaN, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
 		];
 		private static readonly object[][] CasesConstructorDouble = [
 			[-0.0, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			[0, BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
-			[-Epsilon, -4.9406564584124654417, -324, ToleranceLow, ToleranceLow],
-			[Epsilon, 4.9406564584124654417, -324, ToleranceLow, ToleranceLow],
+			[-double.Epsilon, -4.9406564584124654417, -324, ToleranceLow, ToleranceLow],
+			[double.Epsilon, 4.9406564584124654417, -324, ToleranceLow, ToleranceLow],
 			[-0.5, -BigDouble.Half.Mantissa, BigDouble.Half.Exponent, ToleranceLow, ToleranceLow],
 			[0.5, BigDouble.Half.Mantissa, BigDouble.Half.Exponent, ToleranceLow, ToleranceLow],
 			[-1, -BigDouble.One.Mantissa, BigDouble.One.Exponent, ToleranceLow, ToleranceLow],
 			[1, BigDouble.One.Mantissa, BigDouble.One.Exponent, ToleranceLow, ToleranceLow],
 			[-10, -BigDouble.Ten.Mantissa, BigDouble.Ten.Exponent, ToleranceLow, ToleranceLow],
 			[10, BigDouble.Ten.Mantissa, BigDouble.Ten.Exponent, ToleranceLow, ToleranceLow],
-			[MinValue, -1.7976931348623157081, 308, ToleranceLow, ToleranceLow],
-			[MaxValue, 1.7976931348623157081, 308, ToleranceLow, ToleranceLow],
-			[NegativeInfinity, BigDouble.NegativeInfinity.Mantissa, BigDouble.NegativeInfinity.Exponent, ToleranceLow, ToleranceLow],
-			[PositiveInfinity, BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow],
-			[NaN, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
+			[double.MinValue, -1.7976931348623157081, 308, ToleranceLow, ToleranceLow],
+			[double.MaxValue, 1.7976931348623157081, 308, ToleranceLow, ToleranceLow],
+			[double.NegativeInfinity, BigDouble.NegativeInfinity.Mantissa, BigDouble.NegativeInfinity.Exponent, ToleranceLow, ToleranceLow],
+			[double.PositiveInfinity, BigDouble.PositiveInfinity.Mantissa, BigDouble.PositiveInfinity.Exponent, ToleranceLow, ToleranceLow],
+			[double.NaN, BigDouble.NaN.Mantissa, BigDouble.NaN.Exponent, ToleranceLow, ToleranceLow]
 		];
 		private static readonly object[][] CasesGetPowerOf10Int = [
 			[0, 1, ToleranceLow],
@@ -198,8 +192,15 @@ namespace BreakInfinityTests {
 			[new BigDouble(1.23456789012345678, 8, false), 6, 6, 4, Notation.Engineering, CultureInfo.InvariantCulture, "123e6"],
 			[new BigDouble(1.23456789012345678, 12345678901, false), 6, 6, 4, Notation.Engineering, CultureInfo.InvariantCulture, "1e1e10"]
 		];
-
-		//BigDouble n, int length, int decimals, int smallDec, Notation notation, IFormatProvider? formatProvider, string expected
+		private static readonly object[][] CasesAddSubtract1OrUlpBigDouble = [
+			[BigDouble.Zero, 0],
+			[-BigDouble.One, -1],
+			[BigDouble.One, 1],
+			[-BigDouble.Ten, -10],
+			[BigDouble.Ten, 10],
+			[new BigDouble(-1, 100, false), -1e100],
+			[new BigDouble(1, 100, false), 1e100]
+		];
 
 		static BigDoubleTests() {
 			int count = CasesUnaryBigDoubleStrictAllSimple.Length;
@@ -452,5 +453,11 @@ namespace BreakInfinityTests {
 		[TestCaseSource(nameof(CasesToCustomStringBigDouble))]
 		public void ToCustomStringBigDouble(BigDouble n, int length, int decimals, int smallDec, Notation notation, IFormatProvider? formatProvider, string expected)
 			=> AssertEqualString(n.ToCustomString(length, decimals, smallDec, notation, formatProvider), expected);
+
+		[TestCaseSource(nameof(CasesAddSubtract1OrUlpBigDouble))]
+		public void Add1OrUlpBigDouble(BigDouble n, double d) => AssertEqualBigDouble(n.Add1OrUlp(), d == ++d ? Math.BitIncrement(d) : d);
+
+		[TestCaseSource(nameof(CasesAddSubtract1OrUlpBigDouble))]
+		public void Subtract1OrUlpBigDouble(BigDouble n, double d) => AssertEqualBigDouble(n.Subtract1OrUlp(), d == --d ? Math.BitDecrement(d) : d);
 	}
 }

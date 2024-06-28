@@ -22,12 +22,11 @@ namespace BreakInfinity {
 
 	/// <summary>
 	///   <para>
-	///     This is a replacement for <see cref="double"/> for use with numbers as large as 1e1e308 == 10^(10^308) and as small as 1e-1e308 == 10^-(10^308) ==
-	///     1/(10^(10^308)), and prioritizes performance over accuracy.
+	///     This is a replacement for <see cref="double"/> for use with numbers as large as 1e1e308 == 10^(10^308) and as small as 1e-1e308 == 10^-(10^308) == 1/(10^(10^308)), and prioritizes performance over accuracy.
 	///   </para>
 	///   <para>
-	///     The most noticeable consequence of prioritizing performance is that numbers above a certain threshold no longer have a proper mantissa due to the
-	///     limited precision, but this should be irrelevant for this type's intended use case (incremental games).
+	///     The most noticeable consequence of prioritizing performance is that numbers above a certain threshold no longer have a proper mantissa due to the limited precision, but this should be irrelevant for this type's
+	///     intended use case (incremental games).
 	///   </para>
 	///   <para>Note that the instance functions suffixed with "Mod" modify the instance they are called on instead of making a copy.</para>
 	/// </summary>
@@ -307,10 +306,7 @@ namespace BreakInfinity {
 
 		public static BigDouble Max(BigDouble l, BigDouble r) => l > r || l.IsNaN() ? l : r;
 
-		/// <summary>
-		///   Unlike <see cref="Math.Clamp"/>, this does not throw an exception when min is greater than max, so it is up to the developer to provide the right
-		///   parameters for the correct behavior.
-		/// </summary>
+		/// <summary>Unlike <see cref="Math.Clamp"/>, this does not throw an exception when min is greater than max, so it is up to the developer to provide the right parameters for the correct behavior.</summary>
 		public static BigDouble Clamp(BigDouble n, BigDouble min, BigDouble max) => n < min ? min : n > max ? max : n;
 
 		public readonly bool IsFinite() => double.IsFinite(Mantissa);
@@ -390,25 +386,17 @@ namespace BreakInfinity {
 		}
 
 		/// <summary>Makes a custom string representation that makes it easier to make this number stay within a certain length.</summary>
-		/// <param name="length">
-		///   The maximum length of the string representation in characters (includes minus signs and the 'e' in "1e100", excludes group separators and the
-		///   decimal point).
-		/// </param>
+		/// <param name="length">The maximum length of the string representation in characters (includes minus signs and the 'e' in "1e100", excludes group separators and the decimal point).</param>
 		/// <param name="decimals">The maximum number of digits to show after the decimal point when this number requires abbreviation.</param>
-		/// <param name="smallDec">
-		///   The maximum number of significant digits to show when this number is small enough to be shown as is (ignored if less than the number of digits
-		///   before the decimal point).
-		/// </param>
+		/// <param name="smallDec">The maximum number of significant digits to show when this number is small enough to be shown as is (ignored if less than the number of digits before the decimal point).</param>
 		/// <param name="notation">
-		///   The type of notation to use when abbreviating this number (standard = letters like k and m, scientific = AeB = A * 10 ^ B, engineering =
-		///   scientific but exponent fixed to multiples of 3).
+		///   The type of notation to use when abbreviating this number (standard = letters like k and m, scientific = AeB = A * 10 ^ B, engineering = scientific but exponent fixed to multiples of 3).
 		/// </param>
 		/// <param name="formatProvider">The format provider to apply to each number component.</param>
 		/// <remarks>
-		///   When this number is too large for standard notation, it falls back to scientific notation. When this number is too large for scientific or
-		///   engineering notation in the given length, it falls back to the format AeBeC = A * 10 ^ (B * 10 ^ C). When the magnitude of the exponent of this
-		///   number is greater than <see cref="ThresholdMod1Double"/>, it stops displaying the mantissa (A in the previous format description) since it is
-		///   always 1.
+		///   When this number is too large for standard notation, it falls back to scientific notation. When this number is too large for scientific or engineering notation in the given length, it falls back to the format
+		///   AeBeC = A * 10 ^ (B * 10 ^ C). When the magnitude of the exponent of this number is greater than <see cref="ThresholdMod1Double"/>, it stops displaying the mantissa (A in the previous format description) since
+		///   it is always 1.
 		/// </remarks>
 		public readonly string ToCustomString(int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider? formatProvider = null) {
 			double eabs = Math.Abs(Exponent);
@@ -515,7 +503,11 @@ namespace BreakInfinity {
 			}
 		}
 
-		public readonly BigDouble Normalize() => new(Mantissa, Exponent);
+		public readonly BigDouble Normalize() {
+			BigDouble n = this;
+			n.NormalizeMod();
+			return n;
+		}
 
 		public void NegateMod() => Mantissa = -Mantissa;
 
@@ -539,11 +531,12 @@ namespace BreakInfinity {
 				Exponent = 0;
 				return;
 			}
-			if(Exponent < other.Exponent) {
-				Mantissa += other.Mantissa * GetPowerOf10(-(int)diff);
+			int idiff = (int)diff;
+			if(idiff <= 0) {
+				Mantissa += other.Mantissa * GetPowerOf10(-idiff);
 			}
 			else {
-				Mantissa = Mantissa * GetPowerOf10((int)diff) + other.Mantissa;
+				Mantissa = Mantissa * GetPowerOf10(idiff) + other.Mantissa;
 				Exponent -= diff;
 			}
 			NormalizeMod();
@@ -559,18 +552,10 @@ namespace BreakInfinity {
 			BigDouble original = this;
 			AddMod(One);
 			if(this == original) {
-#if NET5_0_OR_GREATER
-				Mantissa = Math.BitIncrement(Mantissa);
-#else
 				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? -1 : 1));
-#endif
 				NormalizeMod();
-				if(Mantissa < original.Mantissa && Exponent == original.Exponent) {
-#if NET5_0_OR_GREATER
-					Exponent = Math.BitIncrement(Exponent);
-#else
+				if(Mantissa <= original.Mantissa && Exponent == original.Exponent) {
 					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) + 1);
-#endif
 					NormalizeMod();
 				}
 			}
@@ -594,18 +579,10 @@ namespace BreakInfinity {
 			BigDouble original = this;
 			SubtractMod(One);
 			if(this == original) {
-#if NET5_0_OR_GREATER
-				Mantissa = Math.BitDecrement(Mantissa);
-#else
 				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? 1 : -1));
-#endif
 				NormalizeMod();
-				if(Mantissa > original.Mantissa && Exponent == original.Exponent) {
-#if NET5_0_OR_GREATER
-					Exponent = Math.BitDecrement(Exponent);
-#else
+				if(Mantissa >= original.Mantissa && Exponent == original.Exponent) {
 					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) - 1);
-#endif
 					NormalizeMod();
 				}
 			}
