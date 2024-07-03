@@ -7,9 +7,11 @@ namespace BreakInfinity {
 	using System.Collections.Generic;
 	using System.Globalization;
 
-#if UNITY_2021_2_OR_NEWER
+#if NET5_0_OR_GREATER
+	// Starting from .NET 5, BinaryFormatter (and therefore the Serializable attribute) have been in the process of obsoletion and removal due to security vulnerabilities, which means the Serializable attribute will have no
+	// reason to be used here once Unity upgrades to a modern version of .NET. This preprocessor symbol looks like the best candidate to check for this correctly even after Unity's eventual upgrade.
+#elif UNITY_2021_2_OR_NEWER
 	[Serializable]
-#elif NET5_0_OR_GREATER
 #else
 #error The current compiler is too old for this code (requires C# 9).
 #error version
@@ -30,7 +32,8 @@ namespace BreakInfinity {
 	///   </para>
 	///   <para>Note that the instance functions suffixed with "Mod" modify the instance they are called on instead of making a copy.</para>
 	/// </summary>
-#if UNITY_2021_2_OR_NEWER
+#if NET5_0_OR_GREATER
+#elif UNITY_2021_2_OR_NEWER
 	[Serializable]
 #endif
 	public struct BigDouble: IComparable, IComparable<BigDouble>, IEquatable<BigDouble>, IFormattable {
@@ -388,7 +391,7 @@ namespace BreakInfinity {
 		/// <summary>Makes a custom string representation that makes it easier to make this number stay within a certain length.</summary>
 		/// <param name="length">The maximum length of the string representation in characters (includes minus signs and the 'e' in "1e100", excludes group separators and the decimal point).</param>
 		/// <param name="decimals">The maximum number of digits to show after the decimal point when this number requires abbreviation.</param>
-		/// <param name="smallDec">The maximum number of significant digits to show when this number is small enough to be shown as is (ignored if less than the number of digits before the decimal point).</param>
+		/// <param name="smallDec">The maximum number of digits to show after the decimal point when this number does not require abbreviation.</param>
 		/// <param name="notation">
 		///   The type of notation to use when abbreviating this number (standard = letters like k and m, scientific = AeB = A * 10 ^ B, engineering = scientific but exponent fixed to multiples of 3).
 		/// </param>
@@ -410,7 +413,7 @@ namespace BreakInfinity {
 			}
 			if(eabs <= length) {
 				int ei = (int)Exponent;
-				return Truncate(Mantissa * GetPowerOf10(ei), Math.Clamp(smallDec - ei, 0, Math.Min(length - ei, length))).ToString("#,0.###############", formatProvider);
+				return Truncate(Mantissa * GetPowerOf10(ei), Math.Min(smallDec, Math.Min(length - ei, length))).ToString("#,0.###############", formatProvider);
 			}
 			length = Math.Max(double.IsNegative(Exponent) ? length - 1 : length, 2);
 			int ee = (int)Math.Log10(eabs);
@@ -552,10 +555,11 @@ namespace BreakInfinity {
 			BigDouble original = this;
 			AddMod(One);
 			if(this == original) {
-				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? -1 : 1));
+				long offset = IsNegative() ? -1 : 1;
+				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + offset);
 				NormalizeMod();
 				if(Mantissa <= original.Mantissa && Exponent == original.Exponent) {
-					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) + 1);
+					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) + offset);
 					NormalizeMod();
 				}
 			}
@@ -579,10 +583,11 @@ namespace BreakInfinity {
 			BigDouble original = this;
 			SubtractMod(One);
 			if(this == original) {
-				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + (IsNegative() ? 1 : -1));
+				long offset = IsNegative() ? 1 : -1;
+				Mantissa = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Mantissa) + offset);
 				NormalizeMod();
 				if(Mantissa >= original.Mantissa && Exponent == original.Exponent) {
-					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) - 1);
+					Exponent = BitConverter.Int64BitsToDouble(BitConverter.DoubleToInt64Bits(Exponent) + offset);
 					NormalizeMod();
 				}
 			}
