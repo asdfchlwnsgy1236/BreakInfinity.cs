@@ -185,6 +185,7 @@ namespace BreakInfinity {
 				result = default;
 				return false;
 			}
+			const NumberStyles style = NumberStyles.Float | NumberStyles.AllowThousands;
 			formatProvider ??= DefaultCulture;
 			int epos = s.IndexOf('e', StringComparison.InvariantCultureIgnoreCase);
 			double m, e;
@@ -195,18 +196,18 @@ namespace BreakInfinity {
 				else if(epos == 1 && s[0] == '-') {
 					m = -1;
 				}
-				else if(!double.TryParse(s.AsSpan(0, epos), formatProvider, out m)) {
+				else if(!double.TryParse(s.AsSpan(0, epos), style, formatProvider, out m)) {
 					result = default;
 					return false;
 				}
-				if(!double.TryParse(s.AsSpan(epos + 1), formatProvider, out e)) {
+				if(!double.TryParse(s.AsSpan(epos + 1), style, formatProvider, out e)) {
 					result = default;
 					return false;
 				}
 				result = new(m, e);
 				return true;
 			}
-			if(double.TryParse(s, formatProvider, out m)) {
+			if(double.TryParse(s, style, formatProvider, out m)) {
 				result = new(m);
 				return true;
 			}
@@ -217,7 +218,7 @@ namespace BreakInfinity {
 					break;
 				}
 			}
-			if(upos > 0 && upos < s.Length && double.TryParse(s.AsSpan(0, upos), formatProvider, out m) && StandardNotationExponents.TryGetValue(s[upos..], out e)) {
+			if(upos > 0 && upos < s.Length && double.TryParse(s.AsSpan(0, upos), style, formatProvider, out m) && StandardNotationExponents.TryGetValue(s[upos..], out e)) {
 				result = new(m, e);
 				return true;
 			}
