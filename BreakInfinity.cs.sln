@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BreakInfinity.cs", "BreakInfinity.cs\BreakInfinity.cs.csproj", "{79E31FBD-A230-447A-A5EE-5C54CDEE815E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BreakInfinity", "BreakInfinity\BreakInfinity.csproj", "{36664EE0-4842-4D5D-BB99-2D2F382E8576}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BreakInfinityTests", "BreakInfinityTests\BreakInfinityTests.csproj", "{99FD177F-A58B-49D5-AF7E-37330EF59B32}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BreakInfinityTests", "BreakInfinityTests\BreakInfinityTests.csproj", "{99FD177F-A58B-49D5-AF7E-37330EF59B32}"
 	ProjectSection(ProjectDependencies) = postProject
-		{79E31FBD-A230-447A-A5EE-5C54CDEE815E} = {79E31FBD-A230-447A-A5EE-5C54CDEE815E}
+		{36664EE0-4842-4D5D-BB99-2D2F382E8576} = {36664EE0-4842-4D5D-BB99-2D2F382E8576}
 	EndProjectSection
 EndProject
 Global
@@ -16,10 +16,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{79E31FBD-A230-447A-A5EE-5C54CDEE815E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{79E31FBD-A230-447A-A5EE-5C54CDEE815E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{79E31FBD-A230-447A-A5EE-5C54CDEE815E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{79E31FBD-A230-447A-A5EE-5C54CDEE815E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36664EE0-4842-4D5D-BB99-2D2F382E8576}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36664EE0-4842-4D5D-BB99-2D2F382E8576}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36664EE0-4842-4D5D-BB99-2D2F382E8576}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36664EE0-4842-4D5D-BB99-2D2F382E8576}.Release|Any CPU.Build.0 = Release|Any CPU
 		{99FD177F-A58B-49D5-AF7E-37330EF59B32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{99FD177F-A58B-49D5-AF7E-37330EF59B32}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99FD177F-A58B-49D5-AF7E-37330EF59B32}.Release|Any CPU.ActiveCfg = Release|Any CPU

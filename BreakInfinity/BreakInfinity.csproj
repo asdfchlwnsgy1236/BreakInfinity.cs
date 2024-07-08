@@ -2,5 +2,6 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
 		<OutputType>Library</OutputType>
+		<ImplicitUsings>disable</ImplicitUsings>
 	</PropertyGroup>
 </Project>
