@@ -6,7 +6,7 @@ namespace BreakInfinityTests {
 	using BreakInfinity;
 
 	[TestFixture]
-	public class BigDoubleTests {
+	internal class BigDoubleTests {
 		private const long ToleranceLow = 1L << 2;
 		private const long ToleranceMedium = 1L << 16;
 

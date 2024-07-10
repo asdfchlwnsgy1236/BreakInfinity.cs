@@ -280,7 +280,7 @@ namespace BreakInfinity {
 
 		public static BigDouble Log(BigDouble n, BigDouble b) => n.Log(b);
 
-		public static BigDouble Exp10(double n) => n % 1 == 0 ? new(1, n, false) : new(1, n);
+		public static BigDouble Exp10(double n) => n - Math.Truncate(n) == 0 ? new(1, n, false) : new(1, n);
 
 		public static BigDouble Pow(BigDouble b, double p) => b.Pow(p);
 
@@ -471,7 +471,7 @@ namespace BreakInfinity {
 		/// </summary>
 		/// <remarks>In the case of any non-finite values (NaN and positive/negative infinity), this sets the number to the corresponding preset.</remarks>
 		public void NormalizeMod() {
-			double mabs = Math.Abs(Mantissa), ef = Exponent % 1;
+			double mabs = Math.Abs(Mantissa), ef = Exponent - Math.Truncate(Exponent);
 			bool ismsig = Math.Abs(Exponent) < ThresholdMod1Double || !double.IsFinite(Exponent), isNormalLow = mabs >= 1 && mabs < 10 && ef == 0;
 			if(ismsig && isNormalLow || !ismsig && mabs == 1) {
 				return;
