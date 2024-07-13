@@ -24,13 +24,14 @@ namespace BreakInfinity {
 
 	/// <summary>
 	///   <para>
-	///     This is a replacement for <see cref="double"/> for use with numbers as large as 1e1e308 == 10^(10^308) and as small as 1e-1e308 == 10^-(10^308) == 1/(10^(10^308)), and prioritizes performance over accuracy.
+	///     This is a replacement for <see cref="double"/> for use with numbers as large as 1e1e308 == 10^(10^308) and as small as 1e-1e308 == 10^-(10^308) == 1/(10^(10^308)), and prioritizes performance over precision.
 	///   </para>
 	///   <para>
 	///     The most noticeable consequence of prioritizing performance is that numbers above a certain threshold no longer have a proper mantissa due to the limited precision, but this should be irrelevant for this type's
 	///     intended use case (incremental games).
 	///   </para>
 	///   <para>Note that the instance functions suffixed with "Mod" modify the instance they are called on instead of making a copy.</para>
+	///   <para>Also note that the behavior for special cases are made to match <see cref="double"/> behavior as much as possible.</para>
 	/// </summary>
 #if NET5_0_OR_GREATER
 #elif UNITY_2021_2_OR_NEWER
