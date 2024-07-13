@@ -5,7 +5,7 @@ A C# port of [break_infinity.js](https://github.com/Patashu/break_infinity.js), 
 ## Usage
 
 Just add the `BigDouble.cs` file to your project and use the `BigDouble` type in your code (it is defined in the `BreakInfinity` namespace).
-If you use Unity, also add the `BigDoubleDrawer.cs` file to your project to have `BigDouble` variables appear in the properties panel.
+If you use Unity, also add the `BigDoubleDrawer.cs` file to your project to have `BigDouble` variables displayed in a more convenient format in the properties panel.
 
 ## Credits
 
