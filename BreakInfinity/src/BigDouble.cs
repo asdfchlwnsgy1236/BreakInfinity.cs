@@ -229,19 +229,7 @@ namespace BreakInfinity {
 
 		public static implicit operator BigDouble(double n) => new(n);
 
-		public static explicit operator double(BigDouble n) {
-			if(!n.IsFinite() || n.Exponent == 0) {
-				return n.Mantissa;
-			}
-			if(n.Exponent > DoubleMaxExponent) {
-				return n.IsNegative() ? double.NegativeInfinity : double.PositiveInfinity;
-			}
-			if(n.Exponent < DoubleMinExponent) {
-				return 0;
-			}
-			int eo = (int)n.Exponent, eo1 = eo / 2, eo2 = eo1 + eo % 2;
-			return n.Mantissa * GetPowerOf10(eo1) * GetPowerOf10(eo2);
-		}
+		public static explicit operator double(BigDouble n) => n.ToDouble();
 
 		public static BigDouble operator +(BigDouble n) => n;
 
@@ -351,7 +339,7 @@ namespace BreakInfinity {
 		public readonly int CompareTo(BigDouble other) {
 			int ecmp = Exponent.CompareTo(other.Exponent);
 			bool isNegative = IsNegative();
-			return !IsFinite() || !IsFinite(other) || IsZero() || IsZero(other) || ecmp == 0 || isNegative != IsNegative(other) ? Mantissa.CompareTo(other.Mantissa) : isNegative ? -ecmp : ecmp;
+			return !IsFinite() || !other.IsFinite() || IsZero() || other.IsZero() || ecmp == 0 || isNegative != other.IsNegative() ? Mantissa.CompareTo(other.Mantissa) : isNegative ? -ecmp : ecmp;
 		}
 
 		public override readonly bool Equals(object? obj) => obj is BigDouble n && Equals(n);
@@ -462,6 +450,20 @@ namespace BreakInfinity {
 #endif
 		}
 
+		public readonly double ToDouble() {
+			if(!IsFinite() || Exponent == 0) {
+				return Mantissa;
+			}
+			if(Exponent > DoubleMaxExponent) {
+				return IsNegative() ? double.NegativeInfinity : double.PositiveInfinity;
+			}
+			if(Exponent < DoubleMinExponent) {
+				return 0;
+			}
+			int eo = (int)Exponent, eo1 = eo / 2, eo2 = eo1 + eo % 2;
+			return Mantissa * GetPowerOf10(eo1) * GetPowerOf10(eo2);
+		}
+
 		/// <summary>
 		///   <para>Brings this number back into normal form which is one of the following:</para>
 		///   <list type="bullet">
@@ -531,7 +533,7 @@ namespace BreakInfinity {
 				this = other;
 				return;
 			}
-			if(!IsFinite() || !IsFinite(other)) {
+			if(!IsFinite() || !other.IsFinite()) {
 				Mantissa += other.Mantissa;
 				Exponent = 0;
 				return;
@@ -715,7 +717,7 @@ namespace BreakInfinity {
 		}
 
 		public readonly BigDouble Log(BigDouble b) {
-			if(IsDouble(b)) {
+			if(b.IsDouble()) {
 				return Log((double)b);
 			}
 			return Log10() / Log10(b);
