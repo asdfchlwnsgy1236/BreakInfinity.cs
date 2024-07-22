@@ -132,6 +132,53 @@ namespace BreakInfinityTests {
 			[BigDouble.PositiveInfinity, true],
 			[BigDouble.NaN, true]
 		];
+		private static readonly object[][] CasesToCustomStringBigDouble = [
+			[new BigDouble(-1, -1.23456789012345678e20, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-e-1.23e20"],
+			[new BigDouble(1, -1.23456789012345678e20, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "e-1.234e20"],
+			[new BigDouble(-1.23456, -123456789, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1e-1.23e8"],
+			[new BigDouble(1.23456, -123456789, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1e-1.234e8"],
+			[new BigDouble(-1.23456, -12, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1.234e-12"],
+			[new BigDouble(1.23456, -12, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1.2345e-12"],
+			[new BigDouble(-1.23456, -3, false), 6, 6, 6, Notation.Scientific, CultureInfo.InvariantCulture, "-0.0012"],
+			[new BigDouble(1.23456, -3, false), 6, 6, 6, Notation.Scientific, CultureInfo.InvariantCulture, "0.00123"],
+			[new BigDouble(1.23456, -3, false), 6, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "0.0012"],
+			[new BigDouble(-1.23456789012345678, false), 15, 15, 15, Notation.Scientific, CultureInfo.InvariantCulture, "-1.2345678901234"],
+			[new BigDouble(1.23456789012345678, false), 15, 15, 15, Notation.Scientific, CultureInfo.InvariantCulture, "1.23456789012345"],
+			[new BigDouble(-1.23456789012345678, false), 6, 6, 6, Notation.Scientific, CultureInfo.InvariantCulture, "-1.2345"],
+			[new BigDouble(1.23456789012345678, false), 6, 6, 6, Notation.Scientific, CultureInfo.InvariantCulture, "1.23456"],
+			[new BigDouble(1.23456789012345678, false), 6, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1.2345"],
+			[new BigDouble(-1.23456789012345678, 5, false), 6, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1.23e5"],
+			[new BigDouble(1.23456789012345678, 5, false), 6, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "123,456"],
+			[new BigDouble(1.23456789012345678, 6, false), 6, 6, 0, Notation.Scientific, CultureInfo.InvariantCulture, "1.234e6"],
+			[new BigDouble(1.23456789012345678, 6, false), 6, 2, 0, Notation.Scientific, CultureInfo.InvariantCulture, "1.23e6"],
+			[new BigDouble(-1.23456789012345678, 12, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1.2e12"],
+			[new BigDouble(1.23456789012345678, 12, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1.23e12"],
+			[new BigDouble(1.23456789012345678, 123, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1.2e123"],
+			[new BigDouble(1.23456789012345678, 1234, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1e1,234"],
+			[new BigDouble(-1.23456789012345678, 12345, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1e1e4"],
+			[new BigDouble(1.23456789012345678, 12345, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1e1.2e4"],
+			[new BigDouble(-1.23456789012345678, 12345678901, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1e1e10"],
+			[new BigDouble(1.23456789012345678, 12345678901, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1e1e10"],
+			[new BigDouble(-1, 1.23456789012345678e20, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-e1e20"],
+			[new BigDouble(1, 1.23456789012345678e20, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "e1.2e20"],
+			[new BigDouble(-1, 1.23456789012345678e100, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-e1e100"],
+			[new BigDouble(1, 1.23456789012345678e100, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "e1e100"],
+			[new BigDouble(-9.99999999999, 12, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-9.9999e12"],
+			[new BigDouble(9.99999999999, 12, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.99999e12"],
+			[new BigDouble(9.99999999999, 12, false), 9, 3, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.999e12"],
+			[new BigDouble(9.99999999999, 12, false), 9, 0, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9e12"],
+			[new BigDouble(9.99999999999, 123, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.9999e123"],
+			[new BigDouble(9.99999999999, 1234, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.999e1,234"],
+			[new BigDouble(9.99999999999, 12345, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.99e12,345"],
+			[new BigDouble(9.99999999999, 123456, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.9e123,456"],
+			[new BigDouble(9.99999999999, 1234567, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9e1,234,567"],
+			[new BigDouble(1.23456789012345678, 6, false), 6, 6, 4, Notation.Standard, CultureInfo.InvariantCulture, "1.23M"],
+			[new BigDouble(1.23456789012345678, 8, false), 6, 6, 4, Notation.Standard, CultureInfo.InvariantCulture, "123M"],
+			[new BigDouble(1.23456789012345678, 12345678901, false), 6, 6, 4, Notation.Standard, CultureInfo.InvariantCulture, "1e1e10"],
+			[new BigDouble(1.23456789012345678, 6, false), 6, 6, 4, Notation.Engineering, CultureInfo.InvariantCulture, "1.23e6"],
+			[new BigDouble(1.23456789012345678, 8, false), 6, 6, 4, Notation.Engineering, CultureInfo.InvariantCulture, "123e6"],
+			[new BigDouble(1.23456789012345678, 12345678901, false), 6, 6, 4, Notation.Engineering, CultureInfo.InvariantCulture, "1e1e10"]
+		];
 		private static readonly object[][] CasesTryParseStringBigDouble = [
 			["0", BigDouble.Zero.Mantissa, BigDouble.Zero.Exponent, ToleranceLow, ToleranceLow],
 			["-e-1.23e30", -1, -1.23e30, ToleranceLow, ToleranceLow],
@@ -243,53 +290,6 @@ namespace BreakInfinityTests {
 			[BigDouble.NegativeInfinity, double.NegativeInfinity, -BigDouble.One, -1, BigDouble.One, 1],
 			[BigDouble.PositiveInfinity, double.PositiveInfinity, -BigDouble.One, -1, BigDouble.One, 1],
 			[BigDouble.NaN, double.NaN, -BigDouble.One, -1, BigDouble.One, 1]
-		];
-		private static readonly object[][] CasesToCustomStringBigDouble = [
-			[new BigDouble(-1, -1.23456789012345678e20, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-e-1.23e20"],
-			[new BigDouble(1, -1.23456789012345678e20, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "e-1.234e20"],
-			[new BigDouble(-1.23456, -123456789, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1e-1.23e8"],
-			[new BigDouble(1.23456, -123456789, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1e-1.234e8"],
-			[new BigDouble(-1.23456, -12, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1.234e-12"],
-			[new BigDouble(1.23456, -12, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1.2345e-12"],
-			[new BigDouble(-1.23456, -3, false), 6, 6, 6, Notation.Scientific, CultureInfo.InvariantCulture, "-0.0012"],
-			[new BigDouble(1.23456, -3, false), 6, 6, 6, Notation.Scientific, CultureInfo.InvariantCulture, "0.00123"],
-			[new BigDouble(1.23456, -3, false), 6, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "0.0012"],
-			[new BigDouble(-1.23456789012345678, false), 15, 15, 15, Notation.Scientific, CultureInfo.InvariantCulture, "-1.2345678901234"],
-			[new BigDouble(1.23456789012345678, false), 15, 15, 15, Notation.Scientific, CultureInfo.InvariantCulture, "1.23456789012345"],
-			[new BigDouble(-1.23456789012345678, false), 6, 6, 6, Notation.Scientific, CultureInfo.InvariantCulture, "-1.2345"],
-			[new BigDouble(1.23456789012345678, false), 6, 6, 6, Notation.Scientific, CultureInfo.InvariantCulture, "1.23456"],
-			[new BigDouble(1.23456789012345678, false), 6, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1.2345"],
-			[new BigDouble(-1.23456789012345678, 5, false), 6, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1.23e5"],
-			[new BigDouble(1.23456789012345678, 5, false), 6, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "123,456"],
-			[new BigDouble(1.23456789012345678, 6, false), 6, 6, 0, Notation.Scientific, CultureInfo.InvariantCulture, "1.234e6"],
-			[new BigDouble(1.23456789012345678, 6, false), 6, 2, 0, Notation.Scientific, CultureInfo.InvariantCulture, "1.23e6"],
-			[new BigDouble(-1.23456789012345678, 12, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1.2e12"],
-			[new BigDouble(1.23456789012345678, 12, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1.23e12"],
-			[new BigDouble(1.23456789012345678, 123, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1.2e123"],
-			[new BigDouble(1.23456789012345678, 1234, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1e1,234"],
-			[new BigDouble(-1.23456789012345678, 12345, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1e1e4"],
-			[new BigDouble(1.23456789012345678, 12345, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1e1.2e4"],
-			[new BigDouble(-1.23456789012345678, 12345678901, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-1e1e10"],
-			[new BigDouble(1.23456789012345678, 12345678901, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "1e1e10"],
-			[new BigDouble(-1, 1.23456789012345678e20, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-e1e20"],
-			[new BigDouble(1, 1.23456789012345678e20, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "e1.2e20"],
-			[new BigDouble(-1, 1.23456789012345678e100, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-e1e100"],
-			[new BigDouble(1, 1.23456789012345678e100, false), 6, 4, 4, Notation.Scientific, CultureInfo.InvariantCulture, "e1e100"],
-			[new BigDouble(-9.99999999999, 12, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "-9.9999e12"],
-			[new BigDouble(9.99999999999, 12, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.99999e12"],
-			[new BigDouble(9.99999999999, 12, false), 9, 3, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.999e12"],
-			[new BigDouble(9.99999999999, 12, false), 9, 0, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9e12"],
-			[new BigDouble(9.99999999999, 123, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.9999e123"],
-			[new BigDouble(9.99999999999, 1234, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.999e1,234"],
-			[new BigDouble(9.99999999999, 12345, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.99e12,345"],
-			[new BigDouble(9.99999999999, 123456, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9.9e123,456"],
-			[new BigDouble(9.99999999999, 1234567, false), 9, 6, 4, Notation.Scientific, CultureInfo.InvariantCulture, "9e1,234,567"],
-			[new BigDouble(1.23456789012345678, 6, false), 6, 6, 4, Notation.Standard, CultureInfo.InvariantCulture, "1.23M"],
-			[new BigDouble(1.23456789012345678, 8, false), 6, 6, 4, Notation.Standard, CultureInfo.InvariantCulture, "123M"],
-			[new BigDouble(1.23456789012345678, 12345678901, false), 6, 6, 4, Notation.Standard, CultureInfo.InvariantCulture, "1e1e10"],
-			[new BigDouble(1.23456789012345678, 6, false), 6, 6, 4, Notation.Engineering, CultureInfo.InvariantCulture, "1.23e6"],
-			[new BigDouble(1.23456789012345678, 8, false), 6, 6, 4, Notation.Engineering, CultureInfo.InvariantCulture, "123e6"],
-			[new BigDouble(1.23456789012345678, 12345678901, false), 6, 6, 4, Notation.Engineering, CultureInfo.InvariantCulture, "1e1e10"]
 		];
 		private static readonly object[][] CasesAdd1OrUlpBigDouble = [
 			[BigDouble.Zero, 1, 0],
@@ -429,6 +429,10 @@ namespace BreakInfinityTests {
 
 		[TestCaseSource(nameof(CasesBinaryBigDoubleAll))]
 		public void GreaterThanOrEqualOperatorBigDoubleBigDouble(BigDouble nl, double dl, BigDouble nr, double dr) => AssertEqualSimple(nl >= nr, dl >= dr);
+
+		[TestCaseSource(nameof(CasesToCustomStringBigDouble))]
+		public void ToCustomStringBigDouble(BigDouble n, int length, int decimals, int smallDec, Notation notation, IFormatProvider? formatProvider, string expected)
+			=> AssertEqualString(BigDouble.ToCustomString(n, length, decimals, smallDec, notation, formatProvider), expected);
 
 		[TestCaseSource(nameof(CasesTryParseStringBigDouble))]
 		public void TryParseStringToBigDouble(string s, double expectedMantissa, double expectedExponent, long toleranceMantissa, long toleranceExponent) {
@@ -624,10 +628,6 @@ namespace BreakInfinityTests {
 				AssertEqualSimple(nl.GetHashCode(), nr.GetHashCode());
 			}
 		});
-
-		[TestCaseSource(nameof(CasesToCustomStringBigDouble))]
-		public void ToCustomStringBigDouble(BigDouble n, int length, int decimals, int smallDec, Notation notation, IFormatProvider? formatProvider, string expected)
-			=> AssertEqualString(n.ToCustomString(length, decimals, smallDec, notation, formatProvider), expected);
 
 		[TestCaseSource(nameof(CasesAdd1OrUlpBigDouble))]
 		public void Add1OrUlpBigDouble(BigDouble n, double expectedMantissa, double expectedExponent) => AssertEqualBigDoubleComponentsExact(n.Add1OrUlp(), expectedMantissa, expectedExponent);

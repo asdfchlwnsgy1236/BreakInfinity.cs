@@ -181,6 +181,9 @@ namespace BreakInfinity {
 
 		public static bool operator >=(BigDouble l, BigDouble r) => l == r || l > r;
 
+		public static string ToCustomString(BigDouble n, int length = DefaultLength, int decimals = DefaultDecimals, int smallDec = DefaultSmallDec, Notation notation = DefaultNotation, IFormatProvider? formatProvider = null)
+			=> n.ToCustomString(length, decimals, smallDec, notation, formatProvider);
+
 		public static bool TryParse(string s, out BigDouble result, IFormatProvider? formatProvider = null) {
 			if(string.IsNullOrEmpty(s)) {
 				result = default;
