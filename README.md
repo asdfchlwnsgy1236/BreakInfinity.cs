@@ -2,6 +2,10 @@
 
 A C# port of [break_infinity.js](https://github.com/Patashu/break_infinity.js), but for slightly bigger numbers than the original (up to approximately `1e1e308`).
 
+## Status
+
+Abandoned; found break_eternity.js, and making a C# version of it instead of fixing this one.
+
 ## Usage
 
 Just add the `BigDouble.cs` file to your project and use the `BigDouble` type in your code (it is defined in the `BreakInfinity` namespace).
